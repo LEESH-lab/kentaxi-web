@@ -131,7 +131,7 @@ export async function GET(request: Request) {
       { type: 'KTX', number: '435', time: '20:15', from: STATIONS.NAJU, to: STATIONS.YONGSAN },
     ];
 
-    const fallbackTrains = [];
+    const fallbackTrains: any[] = [];
     const dateString = `${dateStr.slice(0,4)}-${dateStr.slice(4,6)}-${dateStr.slice(6,8)}`;
     
     mockBaseTrains.forEach(base => {

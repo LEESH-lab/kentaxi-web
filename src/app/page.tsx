@@ -47,6 +47,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [isSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [activeChatPotId, setActiveChatPotId] = useState<string | null>(null);
+  const [meetingOffsetMins, setMeetingOffsetMins] = useState(30);
   
   // Chat States
   const [messages, setMessages] = useState<any[]>([]);
@@ -128,6 +129,7 @@ export default function Home() {
     if (!train || !session) return;
     
     try {
+      const meetingTime = new Date(new Date(train.departureTime).getTime() - meetingOffsetMins * 60000).toISOString();
       const res = await fetch('/api/pots', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -137,6 +139,7 @@ export default function Home() {
           departureTime: train.departureTime,
           from: train.from,
           to: train.to,
+          meetingTime,
         }),
       });
 
@@ -151,8 +154,16 @@ export default function Home() {
   };
 
   const handleJoinPot = async (potId: string) => {
-    // Implement join logic here
-    console.log("Join pot", potId);
+    if (!session) return;
+    try {
+      const res = await fetch(`/api/pots/${potId}/join`, { method: 'POST' });
+      if (res.ok) {
+        const potsRes = await fetch('/api/pots');
+        if (potsRes.ok) setPots(await potsRes.json());
+      }
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   const sendMessage = async (e?: React.FormEvent) => {
@@ -558,13 +569,27 @@ export default function Home() {
               <span className="font-black text-gray-900">{selectedTrain && formatTime(selectedTrain.departureTime)}</span>
             </div>
             <div className="h-px bg-gray-200" />
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500 font-bold">탑승(모임) 시간</span>
-              <div className="flex items-center gap-2">
-                <span className="bg-kakao-yellow/20 text-orange-600 px-2 py-1 rounded text-[10px] font-black">자동계산 (-30분)</span>
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500 font-bold">탑승(모임) 시간</span>
                 <span className="font-black text-xl text-gray-900">
-                  {selectedTrain && formatTime(new Date(new Date(selectedTrain.departureTime).getTime() - 30 * 60000).toISOString())}
+                  {selectedTrain && formatTime(new Date(new Date(selectedTrain.departureTime).getTime() - meetingOffsetMins * 60000).toISOString())}
                 </span>
+              </div>
+              <div className="flex gap-2">
+                {[15, 20, 30, 45, 60].map(mins => (
+                  <button
+                    key={mins}
+                    onClick={() => setMeetingOffsetMins(mins)}
+                    className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${
+                      meetingOffsetMins === mins
+                        ? 'bg-[#1c1c1e] text-kakao-yellow'
+                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}
+                  >
+                    -{mins}분
+                  </button>
+                ))}
               </div>
             </div>
           </div>

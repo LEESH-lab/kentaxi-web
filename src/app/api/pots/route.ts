@@ -38,12 +38,10 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { trainType, trainNumber, departureTime, from, to } = body;
+    const { trainType, trainNumber, departureTime, from, to, meetingTime } = body;
 
-    // Automated Logic: meetingTime is 30 mins before departureTime
-    // departureTime is now ISO string
     const depDate = new Date(departureTime);
-    const meetingDate = new Date(depDate.getTime() - 30 * 60000);
+    const meetingDate = meetingTime ? new Date(meetingTime) : new Date(depDate.getTime() - 30 * 60000);
     
     const pot = await prisma.pot.create({
       data: {

@@ -48,7 +48,7 @@ export default function Home() {
   const [isSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [activeChatPotId, setActiveChatPotId] = useState<string | null>(null);
   const [meetingOffsetMins, setMeetingOffsetMins] = useState(30);
-  
+
   // Chat States
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -56,6 +56,25 @@ export default function Home() {
 
   const dateScrollRef = useRef<HTMLDivElement>(null);
   const trainScrollRef = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  const TIME_OFFSETS = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80, 90];
+  const ITEM_HEIGHT = 48;
+
+  useEffect(() => {
+    if (!isSheetOpen) return;
+    const idx = TIME_OFFSETS.indexOf(meetingOffsetMins);
+    setTimeout(() => {
+      pickerRef.current?.scrollTo({ top: idx * ITEM_HEIGHT, behavior: 'instant' });
+    }, 50);
+  }, [isSheetOpen]);
+
+  const handlePickerScroll = () => {
+    if (!pickerRef.current) return;
+    const idx = Math.round(pickerRef.current.scrollTop / ITEM_HEIGHT);
+    const clamped = Math.max(0, Math.min(idx, TIME_OFFSETS.length - 1));
+    setMeetingOffsetMins(TIME_OFFSETS[clamped]);
+  };
 
   const scrollRight = (ref: React.RefObject<HTMLDivElement | null>) => {
     if (ref.current) {
@@ -569,27 +588,51 @@ export default function Home() {
               <span className="font-black text-gray-900">{selectedTrain && formatTime(selectedTrain.departureTime)}</span>
             </div>
             <div className="h-px bg-gray-200" />
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-500 font-bold">탑승(모임) 시간</span>
-                <span className="font-black text-xl text-gray-900">
-                  {selectedTrain && formatTime(new Date(new Date(selectedTrain.departureTime).getTime() - meetingOffsetMins * 60000).toISOString())}
-                </span>
+                <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-full">출발 {meetingOffsetMins}분 전</span>
               </div>
-              <div className="flex gap-2">
-                {[15, 20, 30, 45, 60].map(mins => (
-                  <button
-                    key={mins}
-                    onClick={() => setMeetingOffsetMins(mins)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${
-                      meetingOffsetMins === mins
-                        ? 'bg-[#1c1c1e] text-kakao-yellow'
-                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                    }`}
-                  >
-                    -{mins}분
-                  </button>
-                ))}
+              {/* Drum Roll Picker */}
+              <div className="relative h-[240px] overflow-hidden rounded-2xl bg-gray-50">
+                {/* Top fade */}
+                <div className="absolute top-0 inset-x-0 h-[96px] bg-gradient-to-b from-gray-50 via-gray-50/80 to-transparent z-10 pointer-events-none" />
+                {/* Bottom fade */}
+                <div className="absolute bottom-0 inset-x-0 h-[96px] bg-gradient-to-t from-gray-50 via-gray-50/80 to-transparent z-10 pointer-events-none" />
+                {/* Center highlight band */}
+                <div className="absolute top-1/2 inset-x-4 h-[48px] -translate-y-1/2 bg-[#1c1c1e]/8 border-y border-gray-200 z-0 rounded-lg" />
+
+                <div
+                  ref={pickerRef}
+                  className="h-full overflow-y-scroll no-scrollbar"
+                  style={{ scrollSnapType: 'y mandatory' }}
+                  onScroll={handlePickerScroll}
+                >
+                  {/* top padding */}
+                  <div style={{ height: 96 }} />
+                  {TIME_OFFSETS.map(mins => {
+                    const meetingTime = selectedTrain
+                      ? formatTime(new Date(new Date(selectedTrain.departureTime).getTime() - mins * 60000).toISOString())
+                      : '--:--';
+                    const isSelected = meetingOffsetMins === mins;
+                    return (
+                      <div
+                        key={mins}
+                        style={{ scrollSnapAlign: 'center', height: 48 }}
+                        className="flex items-center justify-center gap-4"
+                      >
+                        <span className={`font-black transition-all duration-150 ${isSelected ? 'text-3xl text-[#1c1c1e]' : 'text-lg text-gray-300'}`}>
+                          {meetingTime}
+                        </span>
+                        <span className={`font-bold transition-all duration-150 ${isSelected ? 'text-sm text-gray-500' : 'text-xs text-gray-200'}`}>
+                          -{mins}분
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {/* bottom padding */}
+                  <div style={{ height: 96 }} />
+                </div>
               </div>
             </div>
           </div>

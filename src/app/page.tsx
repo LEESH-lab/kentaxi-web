@@ -163,9 +163,11 @@ export default function Home() {
       });
 
       if (res.ok) {
+        const pot = await res.json();
         setIsBottomSheetOpen(false);
         const potsRes = await fetch('/api/pots');
         if (potsRes.ok) setPots(await potsRes.json());
+        setActiveChatPotId(pot.id);
       }
     } catch (e) {
       console.error(e);

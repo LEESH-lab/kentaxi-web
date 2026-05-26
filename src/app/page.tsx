@@ -167,7 +167,7 @@ export default function Home() {
         setIsBottomSheetOpen(false);
         const potsRes = await fetch('/api/pots');
         if (potsRes.ok) setPots(await potsRes.json());
-        setActiveChatPotId(pot.id);
+        setTimeout(() => setActiveChatPotId(pot.id), 350);
       }
     } catch (e) {
       console.error(e);
@@ -596,7 +596,19 @@ export default function Home() {
                 <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-full">출발 {meetingOffsetMins}분 전</span>
               </div>
               {/* Drum Roll Picker */}
-              <div className="relative h-[240px] overflow-hidden rounded-2xl bg-gray-50">
+              <div className="flex flex-col items-center gap-1">
+              <button
+                onClick={() => {
+                  const idx = TIME_OFFSETS.indexOf(meetingOffsetMins);
+                  if (idx > 0) {
+                    pickerRef.current?.scrollBy({ top: -ITEM_HEIGHT, behavior: 'smooth' });
+                  }
+                }}
+                className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 active:scale-95 transition-all"
+              >
+                ▲
+              </button>
+              <div className="relative h-[240px] overflow-hidden rounded-2xl bg-gray-50 w-full">
                 {/* Top fade */}
                 <div className="absolute top-0 inset-x-0 h-[96px] bg-gradient-to-b from-gray-50 via-gray-50/80 to-transparent z-10 pointer-events-none" />
                 {/* Bottom fade */}
@@ -635,6 +647,18 @@ export default function Home() {
                   {/* bottom padding */}
                   <div style={{ height: 96 }} />
                 </div>
+              </div>
+              <button
+                onClick={() => {
+                  const idx = TIME_OFFSETS.indexOf(meetingOffsetMins);
+                  if (idx < TIME_OFFSETS.length - 1) {
+                    pickerRef.current?.scrollBy({ top: ITEM_HEIGHT, behavior: 'smooth' });
+                  }
+                }}
+                className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 active:scale-95 transition-all"
+              >
+                ▼
+              </button>
               </div>
             </div>
           </div>

@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 
 const API_KEY = process.env.DATA_GO_KR_API_KEY;
-const API_URL = 'http://apis.data.go.kr/1613000/TrainInfoService/getStrtpntAlocFndTrainInfo';
+const API_URL = 'https://apis.data.go.kr/1613000/TrainInfo/GetStrtpntAlocFndTrainInfo';
 
 // 역 코드 매핑
 const STATIONS = {
-  NAJU: 'NAT013841',
-  YONGSAN: 'NAT010001',
-  SUSEO: 'NAT014445',
-  MOKPO: 'NAT013851',
+  NAJU: 'NAT031998',
+  YONGSAN: 'NAT010032',
+  SUSEO: 'NATH30000',
+  MOKPO: 'NAT032563',
 };
 
 async function fetchTrainsForRoute(depId: string, arrId: string, date: string) {

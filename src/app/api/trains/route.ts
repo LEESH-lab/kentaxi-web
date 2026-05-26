@@ -58,7 +58,7 @@ async function fetchTrainsForRoute(depId: string, arrId: string, date: string) {
 
       return {
         type: item.traingradename.includes('SRT') ? 'SRT' : item.traingradename.includes('KTX') ? 'KTX' : item.traingradename,
-        number: item.trainno.toString(),
+        number: parseInt(item.trainno, 10).toString(),
         departureTime: formatTime(depStr),
         arrivalTime: formatTime(arrStr),
         from: item.depplacename,

@@ -194,7 +194,8 @@ export default function Home() {
     if (!train || !session) return;
     
     try {
-      const meetingTime = new Date(new Date(train.departureTime).getTime() - meetingOffsetMins * 60000).toISOString();
+      const offsetSign = direction === 'FROM_STATION' ? 1 : -1;
+      const meetingTime = new Date(new Date(train.departureTime).getTime() + offsetSign * meetingOffsetMins * 60000).toISOString();
       const res = await fetch('/api/pots', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -471,7 +472,7 @@ export default function Home() {
                             {trainType} {pot.trainNumber}
                           </span>
                           <div className="text-xs text-gray-400">
-                            <span className="font-bold text-gray-700">{formatTime(pot.departureTime)}</span> 출발
+                            <span className="font-bold text-gray-700">{formatTime(pot.departureTime)}</span> {direction === 'FROM_STATION' ? '도착' : '출발'}
                           </div>
                         </div>
                         <div className="text-xs text-gray-500 font-medium">
@@ -818,7 +819,7 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center h-full opacity-50">
               <MessageCircle className="w-12 h-12 text-black/20 mb-2" />
               <p className="text-xs font-bold text-black/40">
-                {activeChatPotId === 'GLOBAL_OPEN_CHAT' ? '자유롭게 동승자를 구해보세요!' : '동승자와 대화를 시작해보세요'}
+                {activeChatPotId === 'GLOBAL_OPEN_CHAT' ? '자유롭게 동승자를 구해보세요!' : '메시지를 보내보세요. 동승자가 참여하면 함께 대화할 수 있어요.'}
               </p>
             </div>
           ) : (
@@ -840,7 +841,7 @@ export default function Home() {
                   )}
                   <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                     {showAvatar && <span className="text-xs text-gray-600 font-bold mb-1 ml-1">{msg.user?.name || msg.user?.email?.split('@')[0]}</span>}
-                    <div className={`px-3 py-2 rounded-2xl text-[14px] shadow-sm ${isMe ? 'bg-[#1e2b4d] text-white rounded-tr-sm' : 'bg-white text-black rounded-tl-sm'}`}>
+                    <div className={`px-3 py-2 rounded-2xl text-[14px] shadow-sm ${isMe ? 'bg-[#1e40af] text-white rounded-tr-sm' : 'bg-white text-black rounded-tl-sm'}`}>
                       {msg.content}
                     </div>
                     <span className="text-[10px] text-gray-500 mt-1 mx-1">
@@ -895,14 +896,16 @@ export default function Home() {
             </div>
             <div className="h-px bg-gray-200" />
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500 font-bold">기차 출발</span>
+              <span className="text-gray-500 font-bold">{direction === 'FROM_STATION' ? '기차 도착 (나주)' : '기차 출발'}</span>
               <span className="font-black text-gray-900">{selectedTrain && formatTime(selectedTrain.departureTime)}</span>
             </div>
             <div className="h-px bg-gray-200" />
             <div className="flex flex-col gap-2">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-500 font-bold">탑승(모임) 시간</span>
-                <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-full">출발 {meetingOffsetMins}분 전</span>
+                <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+                  {direction === 'FROM_STATION' ? `도착 후 ${meetingOffsetMins}분` : `출발 ${meetingOffsetMins}분 전`}
+                </span>
               </div>
               {/* Drum Roll Picker */}
               <div className="flex flex-col items-center gap-1">
@@ -934,8 +937,9 @@ export default function Home() {
                   {/* top padding */}
                   <div style={{ height: 96 }} />
                   {TIME_OFFSETS.map(mins => {
+                    const offsetSign = direction === 'FROM_STATION' ? 1 : -1;
                     const meetingTime = selectedTrain
-                      ? formatTime(new Date(new Date(selectedTrain.departureTime).getTime() - mins * 60000).toISOString())
+                      ? formatTime(new Date(new Date(selectedTrain.departureTime).getTime() + offsetSign * mins * 60000).toISOString())
                       : '--:--';
                     const isSelected = meetingOffsetMins === mins;
                     return (
@@ -948,7 +952,7 @@ export default function Home() {
                           {meetingTime}
                         </span>
                         <span className={`font-bold transition-all duration-150 ${isSelected ? 'text-sm text-gray-500' : 'text-xs text-gray-200'}`}>
-                          -{mins}분
+                          {direction === 'FROM_STATION' ? `+${mins}분` : `-${mins}분`}
                         </span>
                       </div>
                     );

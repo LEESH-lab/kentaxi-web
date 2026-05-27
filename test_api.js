@@ -1,14 +1,18 @@
 
 
 async function test() {
-  const API_KEY = "724773c6395e755e4f933727a74b0cdb20e4243516e9289fc3ad0debcf701973";
-  const API_URL = 'http://apis.data.go.kr/1613000/TrainInfoService/getCtyCodeList';
+  const API_KEY = "$2a$10$Uj0Hpcq6JBYNVqPNwrPi3OSrLSiJefHzOttPtNNJBwZWY2gKql/qS";
+  const API_URL = 'https://openapi.kric.go.kr/openapi/trainUseInfo/subwayTimetable';
 
   const queryParams = new URLSearchParams({
-    _type: 'json',
+    format: 'json',
+    railOprIsttCd: 'KR',
+    dayCd: '8',
+    lnCd: '1',
+    stinCd: '1001'
   });
 
-  const url = `${API_URL}?serviceKey=${API_KEY}&${queryParams.toString()}`;
+  const url = `${API_URL}?serviceKey=${encodeURIComponent(API_KEY)}&${queryParams.toString()}`;
   console.log("URL:", url);
 
   try {

@@ -51,6 +51,7 @@ export async function POST(req: Request) {
         meetingTime: meetingDate,
         from,
         to,
+        creatorId: session.user.id as string,
         users: {
           create: {
             userId: session.user.id as string,

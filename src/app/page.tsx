@@ -2,17 +2,22 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { 
-  CarTaxiFront, 
-  ArrowLeftRight, 
-  MessageCircle, 
-  Plus, 
-  Car, 
-  Check, 
+import {
+  CarTaxiFront,
+  ArrowLeftRight,
+  MessageCircle,
+  Plus,
+  Car,
+  Check,
   Send,
   Clock,
   User as UserIcon,
-  ChevronRight
+  ChevronRight,
+  Receipt,
+  CreditCard,
+  CheckCircle2,
+  Circle,
+  ShieldCheck
 } from "lucide-react";
 import Link from 'next/link';
 import { trainService, Train } from "@/services/trainService";
@@ -57,6 +62,10 @@ export default function Home() {
   const dateScrollRef = useRef<HTMLDivElement>(null);
   const trainScrollRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
+
+  const [showSettlement, setShowSettlement] = useState(false);
+  const [settlement, setSettlement] = useState<any>(null);
+  const [settlementForm, setSettlementForm] = useState({ totalAmount: '', accountBank: '', accountNumber: '', accountHolder: '' });
 
   const TIME_OFFSETS = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80, 90];
   const ITEM_HEIGHT = 48;
@@ -109,6 +118,43 @@ export default function Home() {
     }
     initData();
   }, [direction, selectedDate]);
+
+  // Settlement fetch
+  useEffect(() => {
+    if (!activeChatPotId || activeChatPotId === 'GLOBAL_OPEN_CHAT') {
+      setSettlement(null);
+      setShowSettlement(false);
+      return;
+    }
+    fetch(`/api/pots/${activeChatPotId}/settlement`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setSettlement(data));
+  }, [activeChatPotId]);
+
+  const handleSubmitSettlement = async () => {
+    if (!activeChatPotId) return;
+    const res = await fetch(`/api/pots/${activeChatPotId}/settlement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        totalAmount: parseInt(settlementForm.totalAmount),
+        accountBank: settlementForm.accountBank,
+        accountNumber: settlementForm.accountNumber,
+        accountHolder: settlementForm.accountHolder,
+      }),
+    });
+    if (res.ok) {
+      const data = await fetch(`/api/pots/${activeChatPotId}/settlement`).then(r => r.json());
+      setSettlement(data);
+    }
+  };
+
+  const handleTogglePay = async () => {
+    if (!activeChatPotId) return;
+    await fetch(`/api/pots/${activeChatPotId}/settlement/pay`, { method: 'POST' });
+    const data = await fetch(`/api/pots/${activeChatPotId}/settlement`).then(r => r.json());
+    setSettlement(data);
+  };
 
   // Chat Polling
   useEffect(() => {
@@ -581,7 +627,7 @@ export default function Home() {
       }`}>
         <header className="bg-white px-4 py-3 border-b flex items-center justify-between z-10 shrink-0">
           <div className="flex items-center gap-3">
-            <button onClick={() => setActiveChatPotId(null)} className="p-2 -ml-2 text-gray-600 active:bg-gray-100 rounded-full">
+            <button onClick={() => { setActiveChatPotId(null); setShowSettlement(false); }} className="p-2 -ml-2 text-gray-600 active:bg-gray-100 rounded-full">
               <ChevronRight className="w-6 h-6 rotate-180" />
             </button>
             <div>
@@ -593,9 +639,181 @@ export default function Home() {
               </p>
             </div>
           </div>
+          {activeChatPotId !== 'GLOBAL_OPEN_CHAT' && (
+            <button
+              onClick={() => setShowSettlement(s => !s)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                showSettlement ? 'bg-kakao-blue text-white' : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              <Receipt className="w-3.5 h-3.5" />
+              정산
+              {settlement?.completedAt && <CheckCircle2 className="w-3 h-3 text-green-400" />}
+            </button>
+          )}
         </header>
         
-        <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#b2c7d9]">
+        {/* 정산 카드 패널 */}
+        {showSettlement && (
+          <div className="flex-1 overflow-y-auto bg-gray-50 p-4 space-y-4">
+            {!settlement ? (
+              /* 방장: 정산 등록 폼 */
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <CreditCard className="w-5 h-5 text-kakao-blue" />
+                  <h3 className="font-black text-base">정산 등록</h3>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 mb-1 block">총 택시비 (원)</label>
+                    <input
+                      type="number"
+                      placeholder="예: 18000"
+                      value={settlementForm.totalAmount}
+                      onChange={e => setSettlementForm(f => ({ ...f, totalAmount: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-kakao-blue"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 mb-1 block">은행명</label>
+                    <input
+                      type="text"
+                      placeholder="예: 카카오뱅크"
+                      value={settlementForm.accountBank}
+                      onChange={e => setSettlementForm(f => ({ ...f, accountBank: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-kakao-blue"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 mb-1 block">계좌번호</label>
+                    <input
+                      type="text"
+                      placeholder="예: 3333-01-1234567"
+                      value={settlementForm.accountNumber}
+                      onChange={e => setSettlementForm(f => ({ ...f, accountNumber: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:border-kakao-blue"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 mb-1 block">예금주</label>
+                    <input
+                      type="text"
+                      placeholder="홍길동"
+                      value={settlementForm.accountHolder}
+                      onChange={e => setSettlementForm(f => ({ ...f, accountHolder: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-kakao-blue"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 bg-blue-50 rounded-xl p-3">
+                    <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0" />
+                    <p className="text-[11px] text-blue-600 leading-relaxed">
+                      계좌번호는 채팅 로그에 저장되지 않으며, 출발 후 7일이 지나면 자동으로 마스킹됩니다.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleSubmitSettlement}
+                    disabled={!settlementForm.totalAmount || !settlementForm.accountNumber}
+                    className="w-full bg-kakao-blue text-white py-3 rounded-xl font-bold text-sm disabled:opacity-40"
+                  >
+                    정산 등록하기
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* 정산 카드 (모든 멤버 조회) */
+              <div className="space-y-4">
+                {/* 금액 카드 */}
+                <div className="bg-kakao-blue rounded-2xl p-5 text-white">
+                  <div className="text-xs font-bold opacity-60 mb-1">총 택시비</div>
+                  <div className="text-3xl font-black mb-4">{settlement.totalAmount.toLocaleString()}원</div>
+                  <div className="bg-white/10 rounded-xl p-3 flex items-center justify-between">
+                    <span className="text-sm font-bold opacity-80">1인당 금액</span>
+                    <span className="text-2xl font-black text-kakao-yellow">{settlement.perPerson.toLocaleString()}원</span>
+                  </div>
+                </div>
+
+                {/* 계좌 정보 */}
+                <div className="bg-white rounded-2xl p-4 border border-gray-100">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CreditCard className="w-4 h-4 text-gray-400" />
+                    <span className="text-xs font-black text-gray-500 uppercase tracking-wider">송금 계좌</span>
+                    {settlement.isMasked && (
+                      <span className="text-[10px] bg-orange-50 text-orange-500 px-2 py-0.5 rounded-full font-bold">마스킹됨</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-400 mb-1">{settlement.accountBank} · {settlement.accountHolder}</div>
+                  <div className="font-mono font-black text-xl text-gray-900">{settlement.accountNumber}</div>
+                  {settlement.isMasked && (
+                    <p className="text-[10px] text-orange-400 mt-2">출발 7일 이후 계좌번호가 마스킹되었습니다.</p>
+                  )}
+                </div>
+
+                {/* 납부 현황 */}
+                <div className="bg-white rounded-2xl p-4 border border-gray-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-black text-gray-500 uppercase tracking-wider">납부 현황</span>
+                    <span className="text-xs font-bold text-kakao-blue">
+                      {settlement.payments.length}/{settlement.memberCount}명 완료
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {settlement.members.map((member: any) => {
+                      const paid = settlement.payments.some((p: any) => p.userId === member.id);
+                      const isMe = member.id === session?.user?.id;
+                      return (
+                        <div key={member.id} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {paid
+                              ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+                              : <Circle className="w-4 h-4 text-gray-300" />
+                            }
+                            <span className={`text-sm font-bold ${isMe ? 'text-kakao-blue' : 'text-gray-700'}`}>
+                              {member.name || member.email?.split('@')[0]}{isMe ? ' (나)' : ''}
+                            </span>
+                          </div>
+                          {isMe && !paid && (
+                            <button
+                              onClick={handleTogglePay}
+                              className="text-xs bg-kakao-yellow text-black px-3 py-1.5 rounded-lg font-bold"
+                            >
+                              납부 완료
+                            </button>
+                          )}
+                          {isMe && paid && (
+                            <button
+                              onClick={handleTogglePay}
+                              className="text-xs bg-gray-100 text-gray-400 px-3 py-1.5 rounded-lg font-bold"
+                            >
+                              취소
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {settlement.completedAt && (
+                  <div className="flex items-center gap-2 bg-green-50 rounded-xl p-3">
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <p className="text-xs text-green-600 font-bold">전원 납부 완료 🎉</p>
+                  </div>
+                )}
+
+                {settlement.isCreator && (
+                  <button
+                    onClick={() => { setSettlement(null); setSettlementForm({ totalAmount: '', accountBank: '', accountNumber: '', accountHolder: '' }); }}
+                    className="w-full text-xs text-gray-400 py-2 hover:text-gray-600"
+                  >
+                    정산 정보 수정하기
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div ref={chatScrollRef} className={`overflow-y-auto p-4 space-y-4 bg-[#b2c7d9] ${showSettlement ? 'hidden' : 'flex-1'}`}>
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full opacity-50">
               <MessageCircle className="w-12 h-12 text-black/20 mb-2" />
@@ -635,7 +853,7 @@ export default function Home() {
           )}
         </div>
         
-        <form onSubmit={sendMessage} className="p-2 px-3 bg-white border-t flex gap-2 items-end shrink-0 safe-bottom">
+        <form onSubmit={sendMessage} className={`p-2 px-3 bg-white border-t flex gap-2 items-end shrink-0 safe-bottom ${showSettlement ? 'hidden' : ''}`}>
           <div className="flex-1 bg-gray-100 rounded-2xl min-h-[40px] px-3 py-2 flex items-center">
             <input 
               type="text" 

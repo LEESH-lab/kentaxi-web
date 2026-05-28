@@ -97,6 +97,7 @@ export default function Home() {
   const [showSettlement, setShowSettlement] = useState(false);
   const [settlement, setSettlement] = useState<any>(null);
   const [settlementForm, setSettlementForm] = useState({ totalAmount: '', accountBank: '', accountNumber: '', accountHolder: '' });
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   const TIME_OFFSETS = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80, 90];
   const ITEM_HEIGHT = 48;
@@ -271,6 +272,18 @@ export default function Home() {
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleLeavePot = async () => {
+    if (!activeChatPotId) return;
+    const res = await fetch(`/api/pots/${activeChatPotId}/leave`, { method: 'DELETE' });
+    if (res.ok) {
+      setActiveChatPotId(null);
+      setShowLeaveConfirm(false);
+      setShowSettlement(false);
+      const potsRes = await fetch('/api/pots');
+      if (potsRes.ok) updatePots(await potsRes.json());
     }
   };
 
@@ -688,6 +701,24 @@ export default function Home() {
         </button>
       </div>
 
+      {/* LEAVE CONFIRM MODAL */}
+      {showLeaveConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200]">
+          <div className="bg-white rounded-3xl p-6 mx-4 max-w-sm w-full shadow-2xl">
+            <h2 className="font-black text-lg text-gray-900 mb-2">팟에서 나가기</h2>
+            <p className="text-sm text-gray-500 mb-6">이 팟에서 나가시겠습니까? 나가면 다시 참여해야 합니다.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowLeaveConfirm(false)} className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-bold text-sm">
+                취소
+              </button>
+              <button onClick={handleLeavePot} className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold text-sm">
+                나가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CHAT PANEL FULL SCREEN OVERLAY */}
       <div className={`absolute inset-0 z-50 bg-kakao-bg flex flex-col transition-transform duration-300 ease-in-out transform ${
         activeChatPotId ? 'translate-x-0' : 'translate-x-full'
@@ -707,16 +738,26 @@ export default function Home() {
             </div>
           </div>
           {activeChatPotId !== 'GLOBAL_OPEN_CHAT' && (
-            <button
-              onClick={() => setShowSettlement(s => !s)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                showSettlement ? 'bg-kakao-blue text-white' : 'bg-gray-100 text-gray-600'
-              }`}
-            >
-              <Receipt className="w-3.5 h-3.5" />
-              정산
-              {settlement?.completedAt && <CheckCircle2 className="w-3 h-3 text-green-400" />}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowSettlement(s => !s)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  showSettlement ? 'bg-kakao-blue text-white' : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                <Receipt className="w-3.5 h-3.5" />
+                정산
+                {settlement?.completedAt && <CheckCircle2 className="w-3 h-3 text-green-400" />}
+              </button>
+              {pots.find(p => p.id === activeChatPotId)?.users?.some((u: any) => u.userId === session?.user?.id) && (
+                <button
+                  onClick={() => setShowLeaveConfirm(true)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-50 text-red-500 transition-all active:bg-red-100"
+                >
+                  나가기
+                </button>
+              )}
+            </div>
           )}
         </header>
         

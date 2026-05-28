@@ -46,3 +46,7 @@ next-env.d.ts
 *.png
 
 .env*.local
+CTempnextdev.log
+response.txt
+test_notification.mjs
+verify_solo_chat.mjs

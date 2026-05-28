@@ -213,6 +213,15 @@ export default function Home() {
     }
   }, [messages]);
 
+  // Refetch pots on every mount (e.g., returning from chat after leaving a pot)
+  useEffect(() => {
+    fetch('/api/pots')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) updatePots(data); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Periodic pot polling to detect new members even when chat is closed
   useEffect(() => {
     if (!session) return;

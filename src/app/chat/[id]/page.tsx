@@ -15,6 +15,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,6 +67,13 @@ export default function ChatPage() {
     }
   };
 
+  const leavePot = async () => {
+    const res = await fetch(`/api/pots/${roomId}/leave`, { method: 'DELETE' });
+    if (res.ok) {
+      router.push('/');
+    }
+  };
+
   const formatTime = (dateStr: string) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
@@ -80,6 +88,22 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 font-sans text-gray-900">
+      {showLeaveConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-3xl p-6 mx-4 max-w-sm w-full shadow-2xl">
+            <h2 className="font-black text-lg text-gray-900 mb-2">팟에서 나가기</h2>
+            <p className="text-sm text-gray-500 mb-6">이 팟에서 나가시겠습니까? 나가면 다시 참여해야 합니다.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowLeaveConfirm(false)} className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-bold text-sm hover:bg-gray-200 transition-all">
+                취소
+              </button>
+              <button onClick={leavePot} className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-all">
+                나가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="px-6 py-4 border-b bg-white flex items-center gap-4 sticky top-0 z-10 shadow-sm">
         <button onClick={() => router.push('/')} className="w-10 h-10 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:text-gray-900 transition-all">
@@ -95,9 +119,9 @@ export default function ChatPage() {
             Meeting at {formatTime(pot.meetingTime)} • {pot._count.users}/{pot.capacity} Users
           </p>
         </div>
-        <button className="w-10 h-10 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400">
+        <button onClick={() => setShowLeaveConfirm(true)} className="w-10 h-10 flex items-center justify-center rounded-2xl bg-red-50 text-red-400 hover:text-red-600 transition-all">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
           </svg>
         </button>
       </header>
@@ -132,9 +156,9 @@ export default function ChatPage() {
               </div>
               <div className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                 <div className={`px-5 py-3 rounded-3xl text-sm font-bold max-w-[260px] shadow-sm ${
-                  isMe 
-                    ? 'bg-blue-600 text-white rounded-tr-none shadow-blue-100' 
-                    : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
+                  isMe
+                    ? 'bg-blue-600 text-white rounded-tr-none shadow-blue-100'
+                    : 'bg-white text-black rounded-tl-none border border-gray-100'
                 }`}>
                   {msg.message}
                 </div>
@@ -155,7 +179,7 @@ export default function ChatPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
               placeholder="메시지를 입력하세요..."
-              className="w-full bg-gray-100 rounded-[2rem] px-6 py-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-gray-300"
+              className="w-full bg-gray-100 rounded-[2rem] px-6 py-4 text-sm font-bold text-black focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-gray-300"
             />
           </div>
           <button 

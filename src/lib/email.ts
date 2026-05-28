@@ -1,10 +1,18 @@
-import { Resend } from 'resend';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import nodemailer from 'nodemailer';
 
 export async function sendVerificationEmail(to: string, code: string) {
-  const { error } = await resend.emails.send({
-    from: '켄택시 <onboarding@resend.dev>',
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
+
+  await transporter.sendMail({
+    from: `켄택시 <${process.env.EMAIL_USER}>`,
     to,
     subject: '[켄택시] 이메일 인증 코드',
     html: `
@@ -18,6 +26,4 @@ export async function sendVerificationEmail(to: string, code: string) {
       </div>
     `,
   });
-
-  if (error) throw new Error(error.message);
 }

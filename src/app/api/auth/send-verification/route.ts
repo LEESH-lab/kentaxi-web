@@ -27,8 +27,9 @@ export async function POST(req: Request) {
     await sendVerificationEmail(email, code);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Send verification error:', error);
-    return NextResponse.json({ message: '이메일 전송에 실패했습니다.' }, { status: 500 });
+    const detail = error?.message || String(error);
+    return NextResponse.json({ message: `이메일 전송에 실패했습니다: ${detail}` }, { status: 500 });
   }
 }

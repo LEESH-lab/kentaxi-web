@@ -980,7 +980,7 @@ export default function Home() {
               disabled={!session}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              className="w-full bg-transparent text-sm focus:outline-none" 
+              className="w-full bg-transparent text-sm text-black focus:outline-none" 
             />
           </div>
           <button 

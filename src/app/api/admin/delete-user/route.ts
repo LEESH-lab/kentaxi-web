@@ -15,7 +15,16 @@ export async function DELETE(req: Request) {
   }
 
   try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+
+    await prisma.userOnPot.deleteMany({ where: { userId: user.id } });
+    await prisma.message.deleteMany({ where: { userId: user.id } });
+    await prisma.payment.deleteMany({ where: { userId: user.id } });
+    await prisma.account.deleteMany({ where: { userId: user.id } });
+    await prisma.session.deleteMany({ where: { userId: user.id } });
     await prisma.user.delete({ where: { email } });
+
     return NextResponse.json({ success: true, deleted: email });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

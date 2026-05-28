@@ -1,16 +1,10 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendVerificationEmail(to: string, code: string) {
-  await transporter.sendMail({
-    from: `켄택시 <${process.env.EMAIL_USER}>`,
+  const { error } = await resend.emails.send({
+    from: '켄택시 <onboarding@resend.dev>',
     to,
     subject: '[켄택시] 이메일 인증 코드',
     html: `
@@ -24,4 +18,6 @@ export async function sendVerificationEmail(to: string, code: string) {
       </div>
     `,
   });
+
+  if (error) throw new Error(error.message);
 }

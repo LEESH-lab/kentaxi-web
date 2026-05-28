@@ -56,6 +56,20 @@ export async function POST(
       },
     });
 
+    // 4. Post a system message so existing members are notified via chat polling
+    const joiningUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true },
+    });
+    const displayName = joiningUser?.name || joiningUser?.email?.split('@')[0] || '새 멤버';
+    await prisma.message.create({
+      data: {
+        content: `__JOIN__${displayName}`,
+        userId,
+        potId,
+      },
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Join error:", error);

@@ -59,6 +59,37 @@ export default function Home() {
   const [newMessage, setNewMessage] = useState("");
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
+  // Notification toast
+  const [notifications, setNotifications] = useState<{ id: string; text: string }[]>([]);
+  const prevPotMembersRef = useRef<Record<string, number>>({});
+  const isPotsInitialized = useRef(false);
+
+  const addNotification = (text: string) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setNotifications(prev => [...prev, { id, text }]);
+    setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 4000);
+  };
+
+  const updatePots = (newPots: any[]) => {
+    if (!isPotsInitialized.current) {
+      const counts: Record<string, number> = {};
+      newPots.forEach(pot => { counts[pot.id] = pot._count.users; });
+      prevPotMembersRef.current = counts;
+      isPotsInitialized.current = true;
+    } else {
+      newPots.forEach(pot => {
+        const isMyPot = pot.users?.some((u: any) => u.userId === session?.user?.id);
+        if (!isMyPot) return;
+        const prevCount = prevPotMembersRef.current[pot.id];
+        if (prevCount !== undefined && pot._count.users > prevCount) {
+          addNotification(`새 파티원이 합류했습니다! (${pot._count.users}/${pot.capacity}명)`);
+        }
+        prevPotMembersRef.current[pot.id] = pot._count.users;
+      });
+    }
+    setPots(newPots);
+  };
+
   const dateScrollRef = useRef<HTMLDivElement>(null);
   const trainScrollRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -106,7 +137,7 @@ export default function Home() {
       
       try {
         const res = await fetch('/api/pots');
-        if (res.ok) setPots(await res.json());
+        if (res.ok) updatePots(await res.json());
       } catch (e) {
         console.error("Failed to fetch pots", e);
       }
@@ -182,6 +213,19 @@ export default function Home() {
     }
   }, [messages]);
 
+  // Periodic pot polling to detect new members even when chat is closed
+  useEffect(() => {
+    if (!session) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/pots');
+        if (res.ok) updatePots(await res.json());
+      } catch (e) {}
+    }, 5000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
   // 2. Interaction Handlers
   const handleTrainClick = (train: Train) => {
     const id = `${train.type}-${train.number}-${train.departureTime}`;
@@ -213,7 +257,7 @@ export default function Home() {
         const pot = await res.json();
         setIsBottomSheetOpen(false);
         const potsRes = await fetch('/api/pots');
-        if (potsRes.ok) setPots(await potsRes.json());
+        if (potsRes.ok) updatePots(await potsRes.json());
         setTimeout(() => setActiveChatPotId(pot.id), 350);
       }
     } catch (e) {
@@ -227,7 +271,7 @@ export default function Home() {
       const res = await fetch(`/api/pots/${potId}/join`, { method: 'POST' });
       if (res.ok) {
         const potsRes = await fetch('/api/pots');
-        if (potsRes.ok) setPots(await potsRes.json());
+        if (potsRes.ok) updatePots(await potsRes.json());
       }
     } catch (e) {
       console.error(e);
@@ -286,7 +330,20 @@ export default function Home() {
 
   return (
     <div className="h-[100dvh] flex flex-col bg-kakao-bg text-foreground overflow-hidden font-sans select-none relative max-w-md mx-auto shadow-2xl">
-      
+
+      {/* NOTIFICATION TOASTS */}
+      <div className="absolute top-4 left-4 right-4 z-[300] flex flex-col gap-2 pointer-events-none">
+        {notifications.map((notif) => (
+          <div
+            key={notif.id}
+            className="bg-[#1c1c1e] text-white px-4 py-3 rounded-2xl shadow-lg flex items-center gap-3 pointer-events-auto"
+          >
+            <UserIcon className="w-4 h-4 text-kakao-yellow shrink-0" />
+            <span className="text-sm font-bold">{notif.text}</span>
+          </div>
+        ))}
+      </div>
+
       {/* HEADER: Kakao T Blue Style */}
       <header className="bg-kakao-blue text-white pt-12 pb-10 px-4 flex flex-col z-0 shrink-0">
         <div className="flex items-center justify-between mb-6">
@@ -824,9 +881,20 @@ export default function Home() {
             </div>
           ) : (
             messages.map((msg, i) => {
+              if (msg.content.startsWith('__JOIN__')) {
+                const name = msg.content.slice(8);
+                return (
+                  <div key={msg.id} className="flex items-center justify-center">
+                    <span className="text-xs text-gray-400 bg-black/5 px-3 py-1 rounded-full">
+                      👋 {name}님이 팟에 참여했습니다
+                    </span>
+                  </div>
+                );
+              }
+
               const isMe = msg.userId === session?.user?.id;
               const showAvatar = !isMe && (i === 0 || messages[i-1].userId !== msg.userId);
-              
+
               return (
                 <div key={msg.id} className={`flex gap-2 max-w-[80%] ${isMe ? 'ml-auto flex-row-reverse' : ''}`}>
                   {!isMe && (

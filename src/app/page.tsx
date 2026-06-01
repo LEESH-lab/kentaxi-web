@@ -284,10 +284,18 @@ export default function Home() {
   const handleCreatePot = async () => {
     const train = trains.find(t => `${t.type}-${t.number}-${t.departureTime}` === selectedTrainId);
     if (!train || !session) return;
-    
+
+    const offsetSign = direction === 'FROM_STATION' ? 1 : -1;
+    const meetingDate = new Date(new Date(train.departureTime).getTime() + offsetSign * meetingOffsetMins * 60000);
+
+    // 현재 시간 이전(과거) 시간대의 팟은 생성할 수 없도록 차단
+    if (meetingDate.getTime() <= Date.now()) {
+      addNotification('현재 시간 이전의 팟은 생성할 수 없습니다.');
+      return;
+    }
+
     try {
-      const offsetSign = direction === 'FROM_STATION' ? 1 : -1;
-      const meetingTime = new Date(new Date(train.departureTime).getTime() + offsetSign * meetingOffsetMins * 60000).toISOString();
+      const meetingTime = meetingDate.toISOString();
       const res = await fetch('/api/pots', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -307,6 +315,9 @@ export default function Home() {
         const potsRes = await fetch('/api/pots');
         if (potsRes.ok) updatePots(await potsRes.json());
         setTimeout(() => setActiveChatPotId(pot.id), 350);
+      } else {
+        const data = await res.json().catch(() => null);
+        addNotification(data?.error || '팟 생성에 실패했습니다.');
       }
     } catch (e) {
       console.error(e);
@@ -332,6 +343,9 @@ export default function Home() {
       if (res.ok) {
         const potsRes = await fetch('/api/pots');
         if (potsRes.ok) updatePots(await potsRes.json());
+      } else {
+        const data = await res.json().catch(() => null);
+        addNotification(data?.error || '팟 참여에 실패했습니다.');
       }
     } catch (e) {
       console.error(e);
@@ -780,7 +794,7 @@ export default function Home() {
               <button
                 onClick={() => setShowSettlement(s => !s)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  showSettlement ? 'bg-kakao-blue text-white' : 'bg-gray-100 text-gray-600'
+                  showSettlement ? 'bg-[#1e40af] text-white' : 'bg-gray-100 text-gray-600'
                 }`}
               >
                 <Receipt className="w-3.5 h-3.5" />
@@ -801,74 +815,74 @@ export default function Home() {
         
         {/* 정산 카드 패널 */}
         {showSettlement && (
-          <div className="flex-1 overflow-y-auto bg-gray-50 p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto bg-[#b2c7d9] p-4 space-y-4">
             {!settlement ? (
               /* 방장: 정산 등록 폼 */
-              <div>
-                <div className="flex items-center justify-between mb-4">
+              <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <CreditCard className="w-5 h-5 text-kakao-blue" />
-                    <h3 className="font-black text-base">정산 등록</h3>
+                    <CreditCard className="w-5.5 h-5.5 text-[#1e40af]" />
+                    <h3 className="font-bold text-base text-black font-sans">정산 등록</h3>
                   </div>
                   <button
                     type="button"
                     onClick={handleLoadDefaultAccount}
-                    className="text-[11px] bg-blue-50 hover:bg-blue-100 text-kakao-blue font-bold px-3 py-1.5 rounded-xl border border-blue-100 active:scale-95 transition-transform cursor-pointer"
+                    className="text-[11px] bg-blue-50 hover:bg-blue-100 text-[#1e40af] font-bold px-3 py-1.5 rounded-xl border border-blue-100 active:scale-95 transition-transform cursor-pointer font-sans"
                   >
                     📂 내 계좌 불러오기
                   </button>
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs font-bold text-gray-500 mb-1 block">총 택시비 (원)</label>
+                    <label className="text-[14px] font-bold text-black mb-1 block font-sans">총 택시비 (원)</label>
                     <input
                       type="number"
                       placeholder="예: 18000"
                       value={settlementForm.totalAmount}
                       onChange={e => setSettlementForm(f => ({ ...f, totalAmount: e.target.value }))}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-kakao-blue"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-[14px] text-black font-sans focus:outline-none focus:border-[#1e40af] bg-white"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 mb-1 block">은행명</label>
+                    <label className="text-[14px] font-bold text-black mb-1 block font-sans">은행명</label>
                     <input
                       type="text"
                       placeholder="예: 카카오뱅크"
                       value={settlementForm.accountBank}
                       onChange={e => setSettlementForm(f => ({ ...f, accountBank: e.target.value }))}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-kakao-blue"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-[14px] text-black font-sans focus:outline-none focus:border-[#1e40af] bg-white"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 mb-1 block">계좌번호</label>
+                    <label className="text-[14px] font-bold text-black mb-1 block font-sans">계좌번호</label>
                     <input
                       type="text"
                       placeholder="예: 3333-01-1234567"
                       value={settlementForm.accountNumber}
                       onChange={e => setSettlementForm(f => ({ ...f, accountNumber: e.target.value }))}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:border-kakao-blue"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-[14px] text-black font-sans focus:outline-none focus:border-[#1e40af] bg-white"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 mb-1 block">예금주</label>
+                    <label className="text-[14px] font-bold text-black mb-1 block font-sans">예금주</label>
                     <input
                       type="text"
                       placeholder="홍길동"
                       value={settlementForm.accountHolder}
                       onChange={e => setSettlementForm(f => ({ ...f, accountHolder: e.target.value }))}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-kakao-blue"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-[14px] text-black font-sans focus:outline-none focus:border-[#1e40af] bg-white"
                     />
                   </div>
                   <div className="flex items-center gap-2 bg-blue-50 rounded-xl p-3">
-                    <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0" />
-                    <p className="text-[11px] text-blue-600 leading-relaxed">
+                    <ShieldCheck className="w-4 h-4 text-[#1e40af] shrink-0" />
+                    <p className="text-[12px] text-[#1e40af] leading-relaxed font-sans">
                       계좌번호는 채팅 로그에 저장되지 않으며, 출발 후 7일이 지나면 자동으로 마스킹됩니다.
                     </p>
                   </div>
                   <button
                     onClick={handleSubmitSettlement}
                     disabled={!settlementForm.totalAmount || !settlementForm.accountNumber}
-                    className="w-full bg-kakao-blue text-white py-3 rounded-xl font-bold text-sm disabled:opacity-40"
+                    className="w-full bg-[#1e40af] text-white py-3 rounded-xl font-bold text-[14px] disabled:opacity-40 font-sans active:scale-95 transition-transform"
                   >
                     정산 등록하기
                   </button>
@@ -878,26 +892,26 @@ export default function Home() {
               /* 정산 카드 (모든 멤버 조회) */
               <div className="space-y-4">
                 {/* 금액 카드 */}
-                <div className="bg-kakao-blue rounded-2xl p-5 text-white">
-                  <div className="text-xs font-bold opacity-60 mb-1">총 택시비</div>
-                  <div className="text-3xl font-black mb-4">{settlement.totalAmount.toLocaleString()}원</div>
-                  <div className="bg-white/10 rounded-xl p-3 flex items-center justify-between">
-                    <span className="text-sm font-bold opacity-80">1인당 금액</span>
-                    <span className="text-2xl font-black text-kakao-yellow">{settlement.perPerson.toLocaleString()}원</span>
+                <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                  <div className="text-[14px] font-bold text-black/60 mb-1 font-sans">총 택시비</div>
+                  <div className="text-xl font-bold text-black mb-4 font-sans">{settlement.totalAmount.toLocaleString()}원</div>
+                  <div className="bg-gray-50 rounded-xl p-3 flex items-center justify-between border border-gray-100">
+                    <span className="text-[14px] font-bold text-black/60 font-sans">1인당 정산 금액</span>
+                    <span className="text-lg font-bold text-[#1e40af] font-sans">{settlement.perPerson.toLocaleString()}원</span>
                   </div>
                 </div>
 
                 {/* 계좌 정보 */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100">
                   <div className="flex items-center gap-2 mb-3">
-                    <CreditCard className="w-4 h-4 text-gray-400" />
-                    <span className="text-xs font-black text-gray-500 uppercase tracking-wider">송금 계좌</span>
+                    <CreditCard className="w-4 h-4 text-black/40" />
+                    <span className="text-[14px] font-bold text-black font-sans uppercase tracking-wider">송금 계좌</span>
                     {settlement.isMasked && (
                       <span className="text-[10px] bg-orange-50 text-orange-500 px-2 py-0.5 rounded-full font-bold">마스킹됨</span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-400 mb-1">{settlement.accountBank} · {settlement.accountHolder}</div>
-                  <div className="font-mono font-black text-xl text-gray-900">{settlement.accountNumber}</div>
+                  <div className="text-[14px] text-black/60 mb-1 font-sans">{settlement.accountBank} · {settlement.accountHolder}</div>
+                  <div className="font-sans font-bold text-lg text-black">{settlement.accountNumber}</div>
                   {settlement.isMasked && (
                     <p className="text-[10px] text-orange-400 mt-2">출발 7일 이후 계좌번호가 마스킹되었습니다.</p>
                   )}
@@ -906,8 +920,8 @@ export default function Home() {
                 {/* 납부 현황 */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-black text-gray-500 uppercase tracking-wider">납부 현황</span>
-                    <span className="text-xs font-bold text-kakao-blue">
+                    <span className="text-[14px] font-bold text-black font-sans uppercase tracking-wider">납부 현황</span>
+                    <span className="text-[14px] font-bold text-[#1e40af] font-sans">
                       {settlement.payments.length}/{settlement.memberCount}명 완료
                     </span>
                   </div>
@@ -922,7 +936,7 @@ export default function Home() {
                               ? <CheckCircle2 className="w-4 h-4 text-green-500" />
                               : <Circle className="w-4 h-4 text-gray-300" />
                             }
-                            <span className={`text-sm font-bold ${isMe ? 'text-kakao-blue' : 'text-gray-700'}`}>
+                            <span className={`text-[14px] font-medium ${isMe ? 'text-[#1e40af] font-bold' : 'text-black'}`}>
                               {member.name || member.email?.split('@')[0]}{isMe ? ' (나)' : ''}
                             </span>
                           </div>
@@ -930,13 +944,13 @@ export default function Home() {
                             <div className="flex gap-1.5 items-center">
                               <a
                                 href={`supertoss://send?bank=${encodeURIComponent(settlement.accountBank)}&account=${encodeURIComponent(settlement.accountNumber)}&amount=${settlement.perPerson}`}
-                                className="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-0.5 active:bg-blue-700"
+                                className="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-0.5 active:bg-blue-700 font-sans"
                               >
                                 ⚡ 토스 송금
                               </a>
                               <button
                                 onClick={handleTogglePay}
-                                className="text-xs bg-kakao-yellow text-black px-2.5 py-1.5 rounded-lg font-bold active:bg-yellow-400"
+                                className="text-xs bg-kakao-yellow text-black px-2.5 py-1.5 rounded-lg font-bold active:bg-yellow-400 font-sans"
                               >
                                 납부 완료
                               </button>
@@ -945,7 +959,7 @@ export default function Home() {
                           {isMe && paid && (
                             <button
                               onClick={handleTogglePay}
-                              className="text-xs bg-gray-100 text-gray-400 px-3 py-1.5 rounded-lg font-bold"
+                              className="text-xs bg-gray-100 text-gray-400 px-3 py-1.5 rounded-lg font-bold font-sans"
                             >
                               취소
                             </button>
@@ -959,14 +973,14 @@ export default function Home() {
                 {settlement.completedAt && (
                   <div className="flex items-center gap-2 bg-green-50 rounded-xl p-3">
                     <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    <p className="text-xs text-green-600 font-bold">전원 납부 완료 🎉</p>
+                    <p className="text-[14px] text-green-600 font-bold font-sans">전원 납부 완료 🎉</p>
                   </div>
                 )}
 
                 {settlement.isCreator && (
                   <button
                     onClick={() => { setSettlement(null); setSettlementForm({ totalAmount: '', accountBank: '', accountNumber: '', accountHolder: '' }); }}
-                    className="w-full text-xs text-gray-400 py-2 hover:text-gray-600"
+                    className="w-full text-[12px] text-black/60 py-2 hover:text-black font-sans"
                   >
                     정산 정보 수정하기
                   </button>
@@ -1111,9 +1125,12 @@ export default function Home() {
                   <div style={{ height: 96 }} />
                   {TIME_OFFSETS.map(mins => {
                     const offsetSign = direction === 'FROM_STATION' ? 1 : -1;
-                    const meetingTime = selectedTrain
-                      ? formatTime(new Date(new Date(selectedTrain.departureTime).getTime() + offsetSign * mins * 60000).toISOString())
-                      : '--:--';
+                    const meetingDateObj = selectedTrain
+                      ? new Date(new Date(selectedTrain.departureTime).getTime() + offsetSign * mins * 60000)
+                      : null;
+                    const meetingTime = meetingDateObj ? formatTime(meetingDateObj.toISOString()) : '--:--';
+                    // 현재 시간 이전(과거)이 되는 모임 시간은 선택 불가로 표시
+                    const isPast = !!meetingDateObj && meetingDateObj.getTime() <= Date.now();
                     const isSelected = meetingOffsetMins === mins;
                     return (
                       <div
@@ -1121,11 +1138,11 @@ export default function Home() {
                         style={{ scrollSnapAlign: 'center', height: 48 }}
                         className="flex items-center justify-center gap-4"
                       >
-                        <span className={`font-black transition-all duration-150 ${isSelected ? 'text-3xl text-[#1c1c1e]' : 'text-lg text-gray-300'}`}>
+                        <span className={`font-black transition-all duration-150 ${isPast ? 'text-lg text-gray-200 line-through' : isSelected ? 'text-3xl text-[#1c1c1e]' : 'text-lg text-gray-300'}`}>
                           {meetingTime}
                         </span>
-                        <span className={`font-bold transition-all duration-150 ${isSelected ? 'text-sm text-gray-500' : 'text-xs text-gray-200'}`}>
-                          {direction === 'FROM_STATION' ? `+${mins}분` : `-${mins}분`}
+                        <span className={`font-bold transition-all duration-150 ${isPast ? 'text-[11px] text-red-300' : isSelected ? 'text-sm text-gray-500' : 'text-xs text-gray-200'}`}>
+                          {isPast ? '지난 시간' : direction === 'FROM_STATION' ? `+${mins}분` : `-${mins}분`}
                         </span>
                       </div>
                     );

@@ -30,6 +30,14 @@ export async function POST(
       return NextResponse.json({ error: "Pot not found" }, { status: 404 });
     }
 
+    // 현재 시간 이전(과거)에 이미 모임 시간이 지난 팟은 참여할 수 없도록 차단
+    if (new Date(pot.meetingTime).getTime() <= Date.now()) {
+      return NextResponse.json(
+        { error: "이미 지난 팟에는 참여할 수 없습니다." },
+        { status: 400 }
+      );
+    }
+
     if (pot._count.users >= pot.capacity) {
       return NextResponse.json({ error: "Pot is full" }, { status: 400 });
     }

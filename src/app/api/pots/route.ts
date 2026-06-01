@@ -42,7 +42,16 @@ export async function POST(req: Request) {
 
     const depDate = new Date(departureTime);
     const meetingDate = meetingTime ? new Date(meetingTime) : new Date(depDate.getTime() - 30 * 60000);
-    
+
+    // 현재 시간 이전(과거) 시간대의 팟은 생성할 수 없도록 차단
+    const now = new Date();
+    if (depDate.getTime() <= now.getTime() || meetingDate.getTime() <= now.getTime()) {
+      return NextResponse.json(
+        { error: "현재 시간 이전의 팟은 생성할 수 없습니다." },
+        { status: 400 }
+      );
+    }
+
     const pot = await prisma.pot.create({
       data: {
         trainType,

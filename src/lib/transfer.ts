@@ -60,5 +60,5 @@ export function getKakaoPayLink(bank: string, account: string, amount: number): 
   if (code) params.set('bank_code', code);
   params.set('bank_account_number', account);
   params.set('amount', String(amount));
-  return `kakaotalk://kakaopay/money/to/account?${params.toString()}`;
+  return `kakaotalk://kakaopay/money/to/bank?${params.toString()}`;
 }

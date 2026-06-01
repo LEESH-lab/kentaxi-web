@@ -880,12 +880,20 @@ export default function Home() {
                             </span>
                           </div>
                           {isMe && !paid && (
-                            <button
-                              onClick={handleTogglePay}
-                              className="text-xs bg-kakao-yellow text-black px-3 py-1.5 rounded-lg font-bold"
-                            >
-                              납부 완료
-                            </button>
+                            <div className="flex gap-1.5 items-center">
+                              <a
+                                href={`supertoss://send?bank=${encodeURIComponent(settlement.accountBank)}&account=${encodeURIComponent(settlement.accountNumber)}&amount=${settlement.perPerson}`}
+                                className="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-0.5 active:bg-blue-700"
+                              >
+                                ⚡ 토스 송금
+                              </a>
+                              <button
+                                onClick={handleTogglePay}
+                                className="text-xs bg-kakao-yellow text-black px-2.5 py-1.5 rounded-lg font-bold active:bg-yellow-400"
+                              >
+                                납부 완료
+                              </button>
+                            </div>
                           )}
                           {isMe && paid && (
                             <button

@@ -32,6 +32,22 @@ export async function DELETE(
       },
     });
 
+    // Check the number of remaining members in the pot
+    const remainingCount = await prisma.userOnPot.count({
+      where: { potId }
+    });
+
+    if (remainingCount === 0) {
+      // Perform cascading cleanup inside a database transaction to delete empty pot
+      await prisma.$transaction([
+        prisma.message.deleteMany({ where: { potId } }),
+        prisma.payment.deleteMany({ where: { settlement: { potId } } }),
+        prisma.settlement.deleteMany({ where: { potId } }),
+        prisma.pot.delete({ where: { id: potId } })
+      ]);
+      return NextResponse.json({ success: true, deleted: true });
+    }
+
     const leavingUser = await prisma.user.findUnique({
       where: { id: userId },
       select: { name: true, email: true },

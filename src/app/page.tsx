@@ -99,6 +99,7 @@ export default function Home() {
   const [settlement, setSettlement] = useState<any>(null);
   const [settlementForm, setSettlementForm] = useState({ totalAmount: '', accountBank: '', accountNumber: '', accountHolder: '' });
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showSettlementCancelConfirm, setShowSettlementCancelConfirm] = useState(false);
 
   const TIME_OFFSETS = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80, 90];
   const ITEM_HEIGHT = 48;
@@ -225,6 +226,22 @@ export default function Home() {
     await fetch(`/api/pots/${activeChatPotId}/settlement/pay`, { method: 'POST' });
     const data = await fetch(`/api/pots/${activeChatPotId}/settlement`).then(r => r.json());
     setSettlement(data);
+  };
+
+  // 정산 취소(삭제): 방장이 잘못 등록한 정산을 납부 기록까지 함께 제거
+  const handleCancelSettlement = async () => {
+    if (!activeChatPotId) return;
+    const res = await fetch(`/api/pots/${activeChatPotId}/settlement`, { method: 'DELETE' });
+    if (res.ok) {
+      setSettlement(null);
+      setSettlementForm({ totalAmount: '', accountBank: '', accountNumber: '', accountHolder: '' });
+      setShowSettlementCancelConfirm(false);
+      addNotification('정산이 취소되었습니다.');
+    } else {
+      const data = await res.json().catch(() => null);
+      addNotification(data?.error || '정산 취소에 실패했습니다.');
+      setShowSettlementCancelConfirm(false);
+    }
   };
 
   // Chat Polling
@@ -772,6 +789,24 @@ export default function Home() {
         </div>
       )}
 
+      {/* SETTLEMENT CANCEL CONFIRM MODAL */}
+      {showSettlementCancelConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200]">
+          <div className="bg-white rounded-3xl p-6 mx-4 max-w-sm w-full shadow-2xl">
+            <h2 className="font-black text-lg text-gray-900 mb-2">정산 취소하기</h2>
+            <p className="text-sm text-gray-500 mb-6">이 정산을 취소하시겠습니까? 등록된 금액·계좌 정보와 모든 납부 기록이 삭제되며, 되돌릴 수 없습니다.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowSettlementCancelConfirm(false)} className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-bold text-sm">
+                돌아가기
+              </button>
+              <button onClick={handleCancelSettlement} className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold text-sm">
+                정산 취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CHAT PANEL FULL SCREEN OVERLAY */}
       <div className={`absolute inset-0 z-50 bg-kakao-bg flex flex-col transition-transform duration-300 ease-in-out transform ${
         activeChatPotId ? 'translate-x-0' : 'translate-x-full'
@@ -985,12 +1020,20 @@ export default function Home() {
                 )}
 
                 {settlement.isCreator && (
-                  <button
-                    onClick={() => { setSettlement(null); setSettlementForm({ totalAmount: '', accountBank: '', accountNumber: '', accountHolder: '' }); }}
-                    className="w-full text-[12px] text-black/60 py-2 hover:text-black font-sans"
-                  >
-                    정산 정보 수정하기
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setSettlement(null); setSettlementForm({ totalAmount: '', accountBank: '', accountNumber: '', accountHolder: '' }); }}
+                      className="flex-1 text-[12px] text-black/60 py-2.5 rounded-xl bg-gray-100 hover:text-black font-bold font-sans"
+                    >
+                      정산 정보 수정
+                    </button>
+                    <button
+                      onClick={() => setShowSettlementCancelConfirm(true)}
+                      className="flex-1 text-[12px] text-red-500 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 font-bold font-sans"
+                    >
+                      정산 취소
+                    </button>
+                  </div>
                 )}
               </div>
             )}

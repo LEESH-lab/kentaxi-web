@@ -84,3 +84,31 @@ export async function POST(
 
   return NextResponse.json(settlement);
 }
+
+// DELETE: 정산 취소/삭제 (방장만). 납부 기록까지 함께 제거한다.
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id: potId } = await params;
+  const pot = await prisma.pot.findUnique({ where: { id: potId } });
+
+  if (!pot) return NextResponse.json({ error: "Pot not found" }, { status: 404 });
+  if (pot.creatorId !== session.user.id) {
+    return NextResponse.json({ error: "방장만 정산을 취소할 수 있습니다." }, { status: 403 });
+  }
+
+  const settlement = await prisma.settlement.findUnique({ where: { potId } });
+  if (!settlement) return NextResponse.json({ error: "정산 내역이 없습니다." }, { status: 404 });
+
+  // payment는 settlement를 참조하므로 먼저 삭제한 뒤 settlement를 삭제한다.
+  await prisma.$transaction([
+    prisma.payment.deleteMany({ where: { settlementId: settlement.id } }),
+    prisma.settlement.delete({ where: { id: settlement.id } }),
+  ]);
+
+  return NextResponse.json({ success: true });
+}

@@ -112,11 +112,18 @@ export async function GET(request: Request) {
     }));
   }
 
-  // 한국 현재 시간 기준으로 이미 지난 열차 필터링
+  // 한국 현재 시간 기준으로 이미 지난 열차 및 선택 불가능한 열차 필터링
+  // - 학교에서 역으로(TO_STATION) 갈 때: 모임 시간은 기차 출발 10분 전이 마지노선이므로, 기차 출발이 현재 기준 최소 10분 이상 남아있어야 팟 생성이 가능합니다.
   const currentTime = Date.now();
   
   let sortedTrains = trains
-    .filter(t => new Date(t.departureTime).getTime() > currentTime)
+    .filter(t => {
+      const trainTime = new Date(t.departureTime).getTime();
+      if (direction === 'TO_STATION') {
+        return trainTime > currentTime + 10 * 60000; // 기차 출발 10분 마진 확보
+      }
+      return trainTime > currentTime;
+    })
     .sort((a, b) => new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime());
 
   // Fallback: If API returns no data (e.g., 403 Forbidden because key is not yet active), use mock data
@@ -136,7 +143,12 @@ export async function GET(request: Request) {
     
     mockBaseTrains.forEach(base => {
       const departureDateTime = new Date(`${dateString}T${base.time}:00+09:00`);
-      if (departureDateTime.getTime() > currentTime) {
+      const trainTime = departureDateTime.getTime();
+      const isValid = direction === 'TO_STATION'
+        ? trainTime > currentTime + 10 * 60000
+        : trainTime > currentTime;
+
+      if (isValid) {
         fallbackTrains.push({
           type: base.type,
           number: base.number,

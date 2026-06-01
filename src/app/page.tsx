@@ -100,6 +100,7 @@ export default function Home() {
   const [settlementForm, setSettlementForm] = useState({ totalAmount: '', accountBank: '', accountNumber: '', accountHolder: '' });
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showSettlementCancelConfirm, setShowSettlementCancelConfirm] = useState(false);
+  const [editingSettlement, setEditingSettlement] = useState(false);
 
   const TIME_OFFSETS = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80, 90];
   const ITEM_HEIGHT = 48;
@@ -155,6 +156,7 @@ export default function Home() {
 
   // Settlement fetch
   useEffect(() => {
+    setEditingSettlement(false);
     if (!activeChatPotId || activeChatPotId === 'GLOBAL_OPEN_CHAT') {
       setSettlement(null);
       setShowSettlement(false);
@@ -167,7 +169,7 @@ export default function Home() {
 
   // Pre-fill settlement form with user's default bank account details if available
   useEffect(() => {
-    if (showSettlement && !settlement) {
+    if (showSettlement && !settlement && !editingSettlement) {
       fetch('/api/user/account')
         .then(res => res.ok ? res.json() : null)
         .then(data => {
@@ -182,7 +184,7 @@ export default function Home() {
         })
         .catch(err => console.error('Failed to pre-fill default account:', err));
     }
-  }, [showSettlement, settlement]);
+  }, [showSettlement, settlement, editingSettlement]);
 
   const handleLoadDefaultAccount = async () => {
     try {
@@ -218,6 +220,7 @@ export default function Home() {
     if (res.ok) {
       const data = await fetch(`/api/pots/${activeChatPotId}/settlement`).then(r => r.json());
       setSettlement(data);
+      setEditingSettlement(false);
     }
   };
 

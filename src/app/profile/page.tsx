@@ -16,8 +16,9 @@ import {
   Camera, 
   Lock, 
   X, 
-  Check 
+  Check
 } from 'lucide-react';
+import { getTossLink, getKakaoPayLink } from '@/lib/transfer';
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
@@ -304,16 +305,22 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex gap-2">
                     <a
-                      href={`supertoss://send?bank=${encodeURIComponent(set.accountBank)}&accountNo=${encodeURIComponent(set.accountNumber)}&amount=${set.perPerson}`}
+                      href={getTossLink(set.accountBank, set.accountNumber, set.perPerson)}
                       className="flex-1 text-center text-[11px] bg-blue-600 text-white py-2 rounded-xl font-bold flex items-center justify-center gap-0.5 active:bg-blue-700 font-sans"
                     >
-                      ⚡ 토스 송금
+                      ⚡ 토스
+                    </a>
+                    <a
+                      href={getKakaoPayLink(set.accountBank, set.accountNumber, set.perPerson)}
+                      className="flex-1 text-center text-[11px] bg-[#FEE500] text-[#3C1E1E] py-2 rounded-xl font-bold flex items-center justify-center gap-0.5 active:bg-[#f5d800] font-sans"
+                    >
+                      ⚡ 카카오페이
                     </a>
                     <button
                       onClick={() => handlePaySettlement(set.potId)}
-                      className="flex-1 text-[11px] bg-kakao-yellow text-black py-2 rounded-xl font-bold active:bg-yellow-400 cursor-pointer font-sans"
+                      className="flex-1 text-[11px] bg-gray-900 text-white py-2 rounded-xl font-bold active:bg-black cursor-pointer font-sans"
                     >
-                      납부 완료
+                      완료
                     </button>
                   </div>
                 </div>

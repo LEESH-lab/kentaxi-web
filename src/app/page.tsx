@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Link from 'next/link';
 import { trainService, Train } from "@/services/trainService";
+import { getTossLink, getKakaoPayLink } from "@/lib/transfer";
 
 type Direction = 'TO_STATION' | 'FROM_STATION';
 type PotStatus = 'NONE' | 'WAITING' | 'CONFIRMED';
@@ -943,14 +944,20 @@ export default function Home() {
                           {isMe && !paid && (
                             <div className="flex gap-1.5 items-center">
                               <a
-                                href={`supertoss://send?bank=${encodeURIComponent(settlement.accountBank)}&accountNo=${encodeURIComponent(settlement.accountNumber)}&amount=${settlement.perPerson}`}
+                                href={getTossLink(settlement.accountBank, settlement.accountNumber, settlement.perPerson)}
                                 className="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-0.5 active:bg-blue-700 font-sans"
                               >
-                                ⚡ 토스 송금
+                                ⚡ 토스
+                              </a>
+                              <a
+                                href={getKakaoPayLink(settlement.accountBank, settlement.accountNumber, settlement.perPerson)}
+                                className="text-xs bg-[#FEE500] text-[#3C1E1E] px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-0.5 active:bg-[#f5d800] font-sans"
+                              >
+                                ⚡ 카카오페이
                               </a>
                               <button
                                 onClick={handleTogglePay}
-                                className="text-xs bg-kakao-yellow text-black px-2.5 py-1.5 rounded-lg font-bold active:bg-yellow-400 font-sans"
+                                className="text-xs bg-gray-900 text-white px-2.5 py-1.5 rounded-lg font-bold active:bg-black font-sans"
                               >
                                 납부 완료
                               </button>

@@ -1018,6 +1018,17 @@ export default function Home() {
                 );
               }
 
+              if (msg.content.startsWith('__LEAVE__')) {
+                const name = msg.content.slice(9);
+                return (
+                  <div key={msg.id} className="flex items-center justify-center">
+                    <span className="text-xs text-gray-400 bg-black/5 px-3 py-1 rounded-full">
+                      🚶 {name}님이 팟에서 나갔습니다
+                    </span>
+                  </div>
+                );
+              }
+
               const isMe = msg.userId === session?.user?.id;
               const showAvatar = !isMe && (i === 0 || messages[i-1].userId !== msg.userId);
 

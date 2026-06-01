@@ -163,6 +163,25 @@ export default function Home() {
       .then(data => setSettlement(data));
   }, [activeChatPotId]);
 
+  // Pre-fill settlement form with user's default bank account details if available
+  useEffect(() => {
+    if (showSettlement && !settlement) {
+      fetch('/api/user/account')
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data) {
+            setSettlementForm(f => ({
+              ...f,
+              accountBank: data.defaultBank || f.accountBank || '',
+              accountNumber: data.defaultAccount || f.accountNumber || '',
+              accountHolder: data.defaultHolder || f.accountHolder || '',
+            }));
+          }
+        })
+        .catch(err => console.error('Failed to pre-fill default account:', err));
+    }
+  }, [showSettlement, settlement]);
+
   const handleSubmitSettlement = async () => {
     if (!activeChatPotId) return;
     const res = await fetch(`/api/pots/${activeChatPotId}/settlement`, {

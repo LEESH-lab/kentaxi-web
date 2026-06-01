@@ -18,6 +18,9 @@ model User {
   password      String?
   emailVerified DateTime?
   image         String?
+  defaultBank   String?
+  defaultAccount String?
+  defaultHolder String?
   accounts      Account[]
   sessions      Session[]
   pots          UserOnPot[]

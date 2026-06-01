@@ -19,7 +19,6 @@ export async function GET() {
           some: { userId }
         },
         settlement: {
-          isNot: null,
           completedAt: null,
           payments: {
             none: { userId }
@@ -41,26 +40,29 @@ export async function GET() {
       }
     });
 
-    // Format the list of pending settlements
+    // Format the list of pending settlements using dynamic casting to bypass strict type inference
     const formatted = pendingPots.map(pot => {
-      const settlement = pot.settlement!;
-      const memberCount = pot.users.length;
+      const p = pot as any;
+      const settlement = p.settlement;
+      if (!settlement) return null;
+      
+      const memberCount = p.users?.length || 1;
       const perPerson = Math.ceil(settlement.totalAmount / memberCount);
 
       return {
-        potId: pot.id,
+        potId: p.id,
         settlementId: settlement.id,
-        from: pot.from,
-        to: pot.to,
-        departureTime: pot.departureTime,
-        meetingTime: pot.meetingTime,
+        from: p.from,
+        to: p.to,
+        departureTime: p.departureTime,
+        meetingTime: p.meetingTime,
         totalAmount: settlement.totalAmount,
         perPerson,
         accountBank: settlement.accountBank,
         accountNumber: settlement.accountNumber,
         accountHolder: settlement.accountHolder,
       };
-    });
+    }).filter(Boolean);
 
     return NextResponse.json(formatted);
   } catch (error) {

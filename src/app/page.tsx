@@ -182,6 +182,25 @@ export default function Home() {
     }
   }, [showSettlement, settlement]);
 
+  const handleLoadDefaultAccount = async () => {
+    try {
+      const res = await fetch('/api/user/account');
+      if (res.ok) {
+        const data = await res.json();
+        if (data) {
+          setSettlementForm(f => ({
+            ...f,
+            accountBank: data.defaultBank || '',
+            accountNumber: data.defaultAccount || '',
+            accountHolder: data.defaultHolder || '',
+          }));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load default account manually:', e);
+    }
+  };
+
   const handleSubmitSettlement = async () => {
     if (!activeChatPotId) return;
     const res = await fetch(`/api/pots/${activeChatPotId}/settlement`, {
@@ -786,9 +805,18 @@ export default function Home() {
             {!settlement ? (
               /* 방장: 정산 등록 폼 */
               <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <CreditCard className="w-5 h-5 text-kakao-blue" />
-                  <h3 className="font-black text-base">정산 등록</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-kakao-blue" />
+                    <h3 className="font-black text-base">정산 등록</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLoadDefaultAccount}
+                    className="text-[11px] bg-blue-50 hover:bg-blue-100 text-kakao-blue font-bold px-3 py-1.5 rounded-xl border border-blue-100 active:scale-95 transition-transform cursor-pointer"
+                  >
+                    📂 내 계좌 불러오기
+                  </button>
                 </div>
                 <div className="space-y-3">
                   <div>

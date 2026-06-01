@@ -66,6 +66,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { name: true, image: true, email: true }
+          });
+          
+          if (dbUser) {
+            const { formatKentechName } = await import("@/lib/kentech");
+            const officialName = formatKentechName(dbUser.email);
+            
+            // Sync official KENTECH name to the database if it doesn't match
+            if (dbUser.name !== officialName) {
+              await prisma.user.update({
+                where: { id: token.id as string },
+                data: { name: officialName }
+              });
+            }
+            
+            session.user.name = officialName;
+            session.user.image = dbUser.image;
+            session.user.email = dbUser.email || "";
+          }
+        } catch (e) {
+          console.error("Failed to fetch fresh session user data:", e);
+        }
       }
       return session;
     },

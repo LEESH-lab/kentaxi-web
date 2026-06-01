@@ -855,13 +855,13 @@ export default function Home() {
         {/* 정산 카드 패널 */}
         {showSettlement && (
           <div className="flex-1 overflow-y-auto bg-[#b2c7d9] p-4 space-y-4">
-            {!settlement ? (
-              /* 방장: 정산 등록 폼 */
+            {(!settlement || editingSettlement) ? (
+              /* 방장: 정산 등록/수정 폼 */
               <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <CreditCard className="w-5.5 h-5.5 text-[#1e40af]" />
-                    <h3 className="font-bold text-base text-black font-sans">정산 등록</h3>
+                    <h3 className="font-bold text-base text-black font-sans">{editingSettlement ? '정산 수정' : '정산 등록'}</h3>
                   </div>
                   <button
                     type="button"
@@ -923,8 +923,16 @@ export default function Home() {
                     disabled={!settlementForm.totalAmount || !settlementForm.accountNumber}
                     className="w-full bg-[#1e40af] text-white py-3 rounded-xl font-bold text-[14px] disabled:opacity-40 font-sans active:scale-95 transition-transform"
                   >
-                    정산 등록하기
+                    {editingSettlement ? '정산 수정 완료' : '정산 등록하기'}
                   </button>
+                  {editingSettlement && (
+                    <button
+                      onClick={() => setEditingSettlement(false)}
+                      className="w-full text-[12px] text-black/50 py-2 hover:text-black font-bold font-sans"
+                    >
+                      수정 취소
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
@@ -1025,7 +1033,15 @@ export default function Home() {
                 {settlement.isCreator && (
                   <div className="flex gap-2">
                     <button
-                      onClick={() => { setSettlement(null); setSettlementForm({ totalAmount: '', accountBank: '', accountNumber: '', accountHolder: '' }); }}
+                      onClick={() => {
+                        setSettlementForm({
+                          totalAmount: String(settlement.totalAmount ?? ''),
+                          accountBank: settlement.accountBank ?? '',
+                          accountNumber: settlement.isMasked ? '' : (settlement.accountNumber ?? ''),
+                          accountHolder: settlement.accountHolder ?? '',
+                        });
+                        setEditingSettlement(true);
+                      }}
                       className="flex-1 text-[12px] text-black/60 py-2.5 rounded-xl bg-gray-100 hover:text-black font-bold font-sans"
                     >
                       정산 정보 수정

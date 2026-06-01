@@ -161,5 +161,15 @@ export async function GET(request: Request) {
     sortedTrains = fallbackTrains.sort((a, b) => new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime());
   }
 
+  // 중복 기차 제거 (동일 기차번호, 기차타입, 출발 시간이 중복되어 조회되는 공공데이터 API 중복건 제거)
+  const uniqueTrainsMap = new Map<string, any>();
+  for (const t of sortedTrains) {
+    const key = `${t.type}-${t.number}-${t.departureTime}`;
+    if (!uniqueTrainsMap.has(key)) {
+      uniqueTrainsMap.set(key, t);
+    }
+  }
+  sortedTrains = Array.from(uniqueTrainsMap.values());
+
   return NextResponse.json(sortedTrains);
 }

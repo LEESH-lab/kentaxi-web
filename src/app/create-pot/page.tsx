@@ -57,7 +57,8 @@ function CreatePotContent() {
       const pot = await res.json();
       router.push(`/chat/${pot.id}`);
     } else {
-      alert('파티 생성에 실패했습니다.');
+      const data = await res.json().catch(() => null);
+      alert(data?.error || '파티 생성에 실패했습니다.');
     }
   };
 

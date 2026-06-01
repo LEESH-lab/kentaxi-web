@@ -943,7 +943,7 @@ export default function Home() {
                           {isMe && !paid && (
                             <div className="flex gap-1.5 items-center">
                               <a
-                                href={`supertoss://send?bank=${encodeURIComponent(settlement.accountBank)}&account=${encodeURIComponent(settlement.accountNumber)}&amount=${settlement.perPerson}`}
+                                href={`supertoss://send?bank=${encodeURIComponent(settlement.accountBank)}&accountNo=${encodeURIComponent(settlement.accountNumber)}&amount=${settlement.perPerson}`}
                                 className="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-0.5 active:bg-blue-700 font-sans"
                               >
                                 ⚡ 토스 송금
@@ -1166,12 +1166,31 @@ export default function Home() {
             </div>
           </div>
 
-          <button 
-            onClick={handleCreatePot}
-            className="w-full bg-[#1c1c1e] text-kakao-yellow h-[56px] rounded-2xl font-black text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-lg shadow-gray-200"
-          >
-            <Check className="w-5 h-5" strokeWidth={3} /> 팟 생성 확정
-          </button>
+          {(() => {
+            const offsetSign = direction === 'FROM_STATION' ? 1 : -1;
+            const selectedMeetingPast = !!selectedTrain &&
+              new Date(new Date(selectedTrain.departureTime).getTime() + offsetSign * meetingOffsetMins * 60000).getTime() <= Date.now();
+            return (
+              <>
+                {selectedMeetingPast && (
+                  <p className="text-center text-xs font-bold text-red-400 mb-3">
+                    현재 시간 이전의 팟은 생성할 수 없습니다. 다른 시간을 선택하세요.
+                  </p>
+                )}
+                <button
+                  onClick={handleCreatePot}
+                  disabled={selectedMeetingPast}
+                  className={`w-full h-[56px] rounded-2xl font-black text-base flex items-center justify-center gap-2 transition-transform shadow-lg ${
+                    selectedMeetingPast
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+                      : 'bg-[#1c1c1e] text-kakao-yellow active:scale-[0.98] shadow-gray-200'
+                  }`}
+                >
+                  <Check className="w-5 h-5" strokeWidth={3} /> 팟 생성 확정
+                </button>
+              </>
+            );
+          })()}
         </div>
       </div>
     </div>

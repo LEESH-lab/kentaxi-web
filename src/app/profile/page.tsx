@@ -197,7 +197,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex gap-2">
                     <a
-                      href={`supertoss://send?bank=${encodeURIComponent(set.accountBank)}&account=${encodeURIComponent(set.accountNumber)}&amount=${set.perPerson}`}
+                      href={`supertoss://send?bank=${encodeURIComponent(set.accountBank)}&accountNo=${encodeURIComponent(set.accountNumber)}&amount=${set.perPerson}`}
                       className="flex-1 text-center text-[11px] bg-blue-600 text-white py-2 rounded-xl font-bold flex items-center justify-center gap-0.5 active:bg-blue-700"
                     >
                       ⚡ 토스 송금

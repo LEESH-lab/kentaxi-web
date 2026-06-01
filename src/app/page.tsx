@@ -417,10 +417,22 @@ export default function Home() {
   const selectedTrain = trains.find(t => `${t.type}-${t.number}-${t.departureTime}` === selectedTrainId);
   const trainPots = pots.filter(p => selectedTrain && p.trainNumber === selectedTrain.number && new Date(p.departureTime).getTime() === new Date(selectedTrain.departureTime).getTime());
 
-  // 선택한 날짜의 모든 팟
+  // 선택한 날짜의 모든 팟 (현재 선택된 방향에 맞는 팟만 필터링)
   const allDayPots = pots.filter(p => {
     const kst = new Date(new Date(p.departureTime).getTime() + 9 * 60 * 60 * 1000);
-    return kst.toISOString().slice(0, 10).replace(/-/g, '') === selectedDate;
+    const dateMatches = kst.toISOString().slice(0, 10).replace(/-/g, '') === selectedDate;
+    if (!dateMatches) return false;
+
+    // 기차 정보 기반 방향 필터링
+    const fromStr = p.from || '';
+    const toStr = p.to || '';
+    if (direction === 'TO_STATION') {
+      // 학교에서 역으로: 출발지가 '나주'인 열차 (Honam Line 상행선)
+      return fromStr === '나주' || fromStr.includes('나주') || fromStr.toUpperCase() === 'NAJU';
+    } else {
+      // 역에서 학교로: 도착지가 '나주'인 열차 (Honam Line 하행선)
+      return toStr === '나주' || toStr.includes('나주') || toStr.toUpperCase() === 'NAJU';
+    }
   });
 
   return (
@@ -491,7 +503,7 @@ export default function Home() {
         {/* DATE SELECTOR (Horizontal Scroll) */}
         <section className="pt-6 pb-2 px-4 bg-white shrink-0 group relative">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-sm">출발 날짜를 선택하세요</h3>
+            <h3 className="font-black text-sm text-gray-900">출발 날짜를 선택하세요</h3>
           </div>
           <div ref={dateScrollRef} className="flex gap-2 overflow-x-auto no-scrollbar pb-2 scroll-smooth">
             {weekDates.map((date) => {
@@ -536,7 +548,7 @@ export default function Home() {
         {/* HORIZONTAL TRAIN TIMELINE */}
         <section className="pt-2 pb-4 px-4 border-b shrink-0 bg-white group relative">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-sm">출발 시간을 선택하세요</h3>
+            <h3 className="font-black text-sm text-gray-900">출발 시간을 선택하세요</h3>
             <span className="text-[11px] text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded-full">실시간</span>
           </div>
           

@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { ArrowLeft, LogOut, User as UserIcon, Mail, CarTaxiFront, CreditCard, Save, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, LogOut, User as UserIcon, Mail, CarTaxiFront, CreditCard, Save, AlertTriangle, Receipt } from 'lucide-react';
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -16,7 +16,18 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
-  // Fetch default bank details on mount
+  // Pending Settlements state
+  const [pendingSettlements, setPendingSettlements] = useState<any[]>([]);
+
+  // Fetch pending settlements
+  const fetchPendingSettlements = () => {
+    fetch('/api/user/settlements/pending')
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setPendingSettlements(data))
+      .catch(err => console.error('Failed to load pending settlements:', err));
+  };
+
+  // Fetch default bank details and pending settlements on mount
   useEffect(() => {
     if (session) {
       fetch('/api/user/account')
@@ -29,6 +40,8 @@ export default function ProfilePage() {
           }
         })
         .catch(err => console.error('Failed to load user account:', err));
+
+      fetchPendingSettlements();
     }
   }, [session]);
 
@@ -68,6 +81,20 @@ export default function ProfilePage() {
       setSaveMessage('❌ 서버 오류가 발생했습니다.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handlePaySettlement = async (potId: string) => {
+    try {
+      const res = await fetch(`/api/pots/${potId}/settlement/pay`, { method: 'POST' });
+      if (res.ok) {
+        // Refresh the pending list
+        fetchPendingSettlements();
+      } else {
+        alert('납부 상태 갱신에 실패했습니다.');
+      }
+    } catch (e) {
+      alert('서버 오류가 발생했습니다.');
     }
   };
 
@@ -135,6 +162,57 @@ export default function ProfilePage() {
               <p className="text-sm font-bold text-gray-800">KENTECH 구성원</p>
             </div>
           </div>
+        </div>
+
+        {/* 정산 대기중 섹션 */}
+        <div className="bg-gray-50 rounded-2xl p-5 mb-6 border border-gray-100 shrink-0">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Receipt className="w-4.5 h-4.5 text-orange-500" />
+              <h3 className="font-bold text-sm text-gray-800">정산 대기중</h3>
+            </div>
+            <span className="text-xs bg-orange-50 text-orange-500 font-bold px-2 py-0.5 rounded-full">
+              {pendingSettlements.length}건
+            </span>
+          </div>
+
+          {pendingSettlements.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-4 font-medium">
+              대기 중인 정산이 없습니다. 깨끗한 정산 상태입니다! 👍
+            </p>
+          ) : (
+            <div className="space-y-3.5 max-h-[220px] overflow-y-auto pr-1 no-scrollbar">
+              {pendingSettlements.map((set) => (
+                <div key={set.potId} className="bg-white rounded-xl p-3.5 border border-gray-100 shadow-sm relative">
+                  <div className="text-[10px] font-bold text-gray-400 mb-1 flex items-center justify-between">
+                    <span className="truncate max-w-[150px]">{set.from} ➔ {set.to}</span>
+                    <span>{new Date(set.departureTime).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}</span>
+                  </div>
+                  <div className="flex justify-between items-baseline mb-2">
+                    <span className="text-[11px] text-gray-400 font-medium">{set.accountBank} · {set.accountHolder}</span>
+                    <span className="text-lg font-black text-orange-500">{set.perPerson.toLocaleString()}원</span>
+                  </div>
+                  <div className="font-mono text-xs text-gray-800 bg-gray-50 px-2 py-1.5 rounded-lg mb-3 break-all select-all">
+                    {set.accountNumber}
+                  </div>
+                  <div className="flex gap-2">
+                    <a
+                      href={`supertoss://send?bank=${encodeURIComponent(set.accountBank)}&account=${encodeURIComponent(set.accountNumber)}&amount=${set.perPerson}`}
+                      className="flex-1 text-center text-[11px] bg-blue-600 text-white py-2 rounded-xl font-bold flex items-center justify-center gap-0.5 active:bg-blue-700"
+                    >
+                      ⚡ 토스 송금
+                    </a>
+                    <button
+                      onClick={() => handlePaySettlement(set.potId)}
+                      className="flex-1 text-[11px] bg-kakao-yellow text-black py-2 rounded-xl font-bold active:bg-yellow-400 cursor-pointer"
+                    >
+                      납부 완료
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* 기본 정산 계좌 관리 */}

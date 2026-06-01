@@ -611,8 +611,8 @@ export default function Home() {
           {/* 선택 날짜 전체 팟 */}
           <div className="mb-2">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-sm">이 날의 모든 팟</h3>
-              <span className="text-[11px] font-bold text-kakao-blue">{allDayPots.length}개</span>
+              <h3 className="font-black text-sm text-gray-900">이 날의 모든 팟</h3>
+              <span className="text-[11px] font-black text-kakao-blue">{allDayPots.length}개</span>
             </div>
             {allDayPots.length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center shadow-sm border border-gray-100">
@@ -635,21 +635,21 @@ export default function Home() {
                           <span className={`text-[10px] font-black px-2 py-1 rounded-lg text-white ${trainType === 'SRT' ? 'bg-[#502845]' : 'bg-[#003B8D]'}`}>
                             {trainType} {pot.trainNumber}
                           </span>
-                          <div className="text-xs text-gray-400">
-                            <span className="font-bold text-gray-700">{formatTime(pot.departureTime)}</span> {direction === 'FROM_STATION' ? '도착' : '출발'}
+                          <div className="text-xs text-gray-600 font-bold">
+                            <span className="font-black text-gray-900">{formatTime(pot.departureTime)}</span> {direction === 'FROM_STATION' ? '도착' : '출발'}
                           </div>
                         </div>
-                        <div className="text-xs text-gray-500 font-medium">
+                        <div className="text-xs text-gray-700 font-bold">
                           {pot.from} → {pot.to}
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between pl-1">
                         <div>
-                          <div className="text-[10px] text-gray-400 font-bold mb-0.5 flex items-center gap-1">
+                          <div className="text-[10px] text-gray-600 font-black mb-0.5 flex items-center gap-1">
                             <Clock className="w-3 h-3" /> 모임 시간
                           </div>
-                          <div className="text-xl font-black">{formatTime(pot.meetingTime)}</div>
+                          <div className="text-xl font-black text-gray-900">{formatTime(pot.meetingTime)}</div>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="flex -space-x-1.5">
@@ -662,7 +662,7 @@ export default function Home() {
                               <div key={i} className="w-6 h-6 rounded-full bg-gray-100 border-2 border-dashed border-gray-300" />
                             ))}
                           </div>
-                          <span className="text-xs font-black text-gray-500">{pot._count.users}/{pot.capacity}</span>
+                          <span className="text-xs font-black text-gray-900">{pot._count.users}/{pot.capacity}</span>
                         </div>
                       </div>
 
@@ -695,8 +695,8 @@ export default function Home() {
           {/* 선택 기차의 팟 */}
           <div className="mt-5 pb-28">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-sm">선택 기차의 팟</h3>
-              <span className="text-[11px] font-bold text-kakao-blue">{trainPots.length}개 대기중</span>
+              <h3 className="font-black text-sm text-gray-900">선택 기차의 팟</h3>
+              <span className="text-[11px] font-black text-kakao-blue">{trainPots.length}개 대기중</span>
             </div>
             {trainPots.length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center shadow-sm border border-gray-100">
@@ -715,15 +715,15 @@ export default function Home() {
                       {isFull && <div className="absolute top-0 right-0 bg-red-50 text-red-500 text-[10px] font-bold px-3 py-1 rounded-bl-xl border-b border-l border-red-100">마감</div>}
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <div className="text-[11px] font-bold text-gray-500 flex items-center gap-1 mb-1">
+                          <div className="text-[11px] font-black text-gray-700 flex items-center gap-1 mb-1">
                             <Clock className="w-3.5 h-3.5" /> 모임 시간
                           </div>
-                          <div className="text-2xl font-black">{formatTime(pot.meetingTime)}</div>
+                          <div className="text-2xl font-black text-gray-900">{formatTime(pot.meetingTime)}</div>
                         </div>
                         <div className="text-right mt-1">
                           <div className="flex items-center gap-1.5 justify-end mb-1">
-                            <span className="text-[11px] font-bold text-gray-500">모집인원</span>
-                            <span className="text-sm font-black">{pot._count.users}<span className="text-gray-300 mx-0.5">/</span>{pot.capacity}</span>
+                            <span className="text-[11px] font-black text-gray-700">모집인원</span>
+                            <span className="text-sm font-black text-gray-900">{pot._count.users}<span className="text-gray-300 mx-0.5">/</span>{pot.capacity}</span>
                           </div>
                           <div className="flex -space-x-1.5 justify-end">
                             {[...Array(pot._count.users)].map((_, i) => (

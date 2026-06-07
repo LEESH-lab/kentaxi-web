@@ -26,7 +26,7 @@ import { getTossLink, getKakaoPayLink } from "@/lib/transfer";
 type Direction = 'TO_STATION' | 'FROM_STATION';
 type PotStatus = 'NONE' | 'WAITING' | 'CONFIRMED';
 
-const KENTECH_COORDS = { lat: 35.0125, lng: 126.8048, name: '한국에너지공과대학교' };
+const KENTECH_COORDS = { lat: 35.0125, lng: 126.8048, name: '전남 나주시 켄텍길 21' };
 const NAJU_STATION_COORDS = { lat: 35.0142611, lng: 126.7169944, name: '나주역' };
 
 function getTaxiRoute(pot: any) {

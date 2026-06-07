@@ -4,14 +4,37 @@ import { auth } from "@/auth";
 
 export async function GET() {
   try {
+    const session = await auth();
+    const userId = session?.user?.id;
     const now = new Date();
+
+    const whereClause = userId
+      ? {
+          OR: [
+            {
+              status: "OPEN",
+              meetingTime: {
+                gt: now, // Only future pots
+              },
+            },
+            {
+              users: {
+                some: {
+                  userId: userId,
+                },
+              },
+            },
+          ],
+        }
+      : {
+          status: "OPEN",
+          meetingTime: {
+            gt: now, // Only future pots
+          },
+        };
+
     const pots = await prisma.pot.findMany({
-      where: {
-        status: "OPEN",
-        meetingTime: {
-          gt: now, // Only future pots
-        },
-      },
+      where: whereClause,
       include: {
         users: {
           include: {

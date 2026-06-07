@@ -86,6 +86,7 @@ export default function Home() {
   const [meetingOffsetMins, setMeetingOffsetMins] = useState(30);
 
   const currentPot = pots.find(p => p.id === activeChatPotId);
+  const myPots = pots.filter(p => p.users?.some((u: any) => u.userId === session?.user?.id));
 
   const handleLaunchKakaoT = () => {
     const userAgent = typeof navigator !== 'undefined' ? (navigator.userAgent || navigator.vendor || (window as any).opera) : '';
@@ -549,6 +550,74 @@ export default function Home() {
       {/* BODY CONTAINER: Overlapping white rounded container */}
       <main className="flex-1 flex flex-col bg-white -mt-4 rounded-t-[24px] z-10 overflow-hidden shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
         
+        {/* MY POTS SECTION */}
+        {session && myPots.length > 0 && (
+          <section className="pt-6 pb-4 px-4 border-b bg-blue-50/15 shrink-0 group relative">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-black text-sm text-gray-900 flex items-center gap-1.5 font-sans">
+                <Car className="w-4.5 h-4.5 text-kakao-blue shrink-0" />
+                나의 팟
+              </h3>
+              <span className="text-[10px] font-black text-[#1e40af] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full font-sans">
+                {myPots.length}개 참여 중
+              </span>
+            </div>
+            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 scroll-smooth">
+              {myPots.map((pot) => {
+                const isToStation = pot.from === '나주' || pot.from.includes('나주') || pot.from.toUpperCase() === 'NAJU';
+                const dateStr = new Date(pot.departureTime).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+                const timeStr = formatTime(pot.meetingTime);
+                const isPast = new Date(pot.meetingTime).getTime() <= Date.now();
+
+                return (
+                  <div 
+                    key={pot.id}
+                    className="shrink-0 w-[240px] p-4 bg-white rounded-2xl border border-blue-100/50 shadow-sm flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded text-white ${pot.trainType === 'SRT' ? 'bg-[#502845]' : 'bg-[#003B8D]'}`}>
+                          {pot.trainType} {pot.trainNumber}
+                        </span>
+                        {isPast ? (
+                          <span className="text-[9px] bg-gray-150 text-gray-500 font-bold px-1.5 py-0.5 rounded">과거/완료</span>
+                        ) : (
+                          <span className="text-[9px] bg-green-50 text-green-500 font-bold px-1.5 py-0.5 rounded">진행 중</span>
+                        )}
+                      </div>
+                      
+                      <p className="text-[10px] text-gray-400 font-bold mb-1 font-sans">
+                        {dateStr} • {timeStr} 모임
+                      </p>
+                      
+                      <h4 className="font-black text-sm text-gray-800 font-sans mb-3 truncate">
+                        {isToStation ? '학교 ➔ 나주역' : '나주역 ➔ 학교'}
+                      </h4>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-2 pt-2.5 border-t border-gray-100">
+                      <div className="flex items-center gap-1">
+                        <UserIcon className="w-3.5 h-3.5 text-gray-400" />
+                        <span className="text-xs font-black text-gray-700 font-sans">
+                          {pot._count?.users || pot.users?.length}/{pot.capacity}
+                        </span>
+                      </div>
+                      
+                      <button
+                        onClick={() => setActiveChatPotId(pot.id)}
+                        className="bg-kakao-blue text-white px-3.5 py-1.5 rounded-xl text-xs font-black active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5 fill-current" />
+                        채팅
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* DATE SELECTOR (Horizontal Scroll) */}
         <section className="pt-6 pb-2 px-4 bg-white shrink-0 group relative">
           <div className="flex items-center justify-between mb-3">

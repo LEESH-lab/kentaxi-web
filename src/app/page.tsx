@@ -551,7 +551,7 @@ export default function Home() {
       </header>
 
       {/* BODY CONTAINER: Overlapping white rounded container */}
-      <main className="flex-1 min-h-0 flex flex-col bg-white -mt-4 rounded-t-[24px] z-10 overflow-hidden shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+      <main className="flex-1 overflow-y-auto flex flex-col bg-white -mt-4 rounded-t-[24px] z-10 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
         
         {/* MY POTS SECTION */}
         {session && myPots.length > 0 && (
@@ -747,7 +747,7 @@ export default function Home() {
         </section>
 
         {/* ALL DAY POTS + SELECTED TRAIN POTS (Vertical Scroll) */}
-        <section className="flex-1 min-h-0 overflow-y-auto p-4 bg-kakao-bg">
+        <section className="p-4 bg-kakao-bg">
 
           {/* 선택 날짜 전체 팟 */}
           <div className="mb-2">

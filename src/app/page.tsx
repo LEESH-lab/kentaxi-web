@@ -86,7 +86,9 @@ export default function Home() {
   const [meetingOffsetMins, setMeetingOffsetMins] = useState(30);
 
   const currentPot = pots.find(p => p.id === activeChatPotId);
-  const myPots = pots.filter(p => p.users?.some((u: any) => u.userId === session?.user?.id));
+  const myPots = pots
+    .filter(p => p.users?.some((u: any) => u.userId === session?.user?.id))
+    .sort((a, b) => new Date(b.meetingTime).getTime() - new Date(a.meetingTime).getTime());
 
   const handleLaunchKakaoT = () => {
     const userAgent = typeof navigator !== 'undefined' ? (navigator.userAgent || navigator.vendor || (window as any).opera) : '';
@@ -143,6 +145,7 @@ export default function Home() {
 
   const dateScrollRef = useRef<HTMLDivElement>(null);
   const trainScrollRef = useRef<HTMLDivElement>(null);
+  const myPotsScrollRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   const [showSettlement, setShowSettlement] = useState(false);
@@ -548,7 +551,7 @@ export default function Home() {
       </header>
 
       {/* BODY CONTAINER: Overlapping white rounded container */}
-      <main className="flex-1 flex flex-col bg-white -mt-4 rounded-t-[24px] z-10 overflow-hidden shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+      <main className="flex-1 min-h-0 flex flex-col bg-white -mt-4 rounded-t-[24px] z-10 overflow-hidden shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
         
         {/* MY POTS SECTION */}
         {session && myPots.length > 0 && (
@@ -562,7 +565,7 @@ export default function Home() {
                 {myPots.length}개 참여 중
               </span>
             </div>
-            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 scroll-smooth">
+            <div ref={myPotsScrollRef} className="flex gap-3 overflow-x-auto no-scrollbar pb-1 scroll-smooth">
               {myPots.map((pot) => {
                 const isToStation = pot.from === '나주' || pot.from.includes('나주') || pot.from.toUpperCase() === 'NAJU';
                 const dateStr = new Date(pot.departureTime).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
@@ -614,6 +617,26 @@ export default function Home() {
                   </div>
                 );
               })}
+            </div>
+            
+            {/* Left Arrow */}
+            <div className="absolute left-0 top-[48px] bottom-0 w-12 bg-gradient-to-r from-white via-white/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-start pl-1 z-10 pointer-events-none">
+              <div 
+                onClick={() => scrollLeft(myPotsScrollRef)}
+                className="w-8 h-8 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-50 hover:scale-105 transition-transform pointer-events-auto cursor-pointer"
+              >
+                <ChevronRight className="w-5 h-5 rotate-180" />
+              </div>
+            </div>
+            
+            {/* Right Arrow */}
+            <div className="absolute right-0 top-[48px] bottom-0 w-12 bg-gradient-to-l from-white via-white/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end pr-1 z-10 pointer-events-none">
+              <div 
+                onClick={() => scrollRight(myPotsScrollRef)}
+                className="w-8 h-8 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-50 hover:scale-105 transition-transform pointer-events-auto cursor-pointer"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </div>
             </div>
           </section>
         )}
@@ -724,7 +747,7 @@ export default function Home() {
         </section>
 
         {/* ALL DAY POTS + SELECTED TRAIN POTS (Vertical Scroll) */}
-        <section className="flex-1 overflow-y-auto p-4 bg-kakao-bg">
+        <section className="flex-1 min-h-0 overflow-y-auto p-4 bg-kakao-bg">
 
           {/* 선택 날짜 전체 팟 */}
           <div className="mb-2">

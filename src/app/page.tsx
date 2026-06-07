@@ -86,6 +86,8 @@ export default function Home() {
   const [meetingOffsetMins, setMeetingOffsetMins] = useState(30);
   const [showTaxiModal, setShowTaxiModal] = useState(false);
 
+  const currentPot = pots.find(p => p.id === activeChatPotId);
+
   // Chat States
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -855,7 +857,6 @@ export default function Home() {
 
       {/* KAKAO TAXI CALL MODAL */}
       {showTaxiModal && (() => {
-        const currentPot = pots.find(p => p.id === activeChatPotId);
         const route = getTaxiRoute(currentPot);
         const encodedStartName = encodeURIComponent(route.startName);
         const encodedEndName = encodeURIComponent(route.endName);
@@ -982,7 +983,6 @@ export default function Home() {
         
         {/* 카카오 T 호출 연동 배너 */}
         {activeChatPotId && activeChatPotId !== 'GLOBAL_OPEN_CHAT' && !showSettlement && (() => {
-          const currentPot = pots.find(p => p.id === activeChatPotId);
           const sortedUsers = [...(currentPot?.users || [])].sort(
             (a, b) => new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
           );
@@ -1143,7 +1143,8 @@ export default function Home() {
                   </div>
                   <div className="space-y-2">
                     {settlement.members.map((member: any) => {
-                      const paid = settlement.payments.some((p: any) => p.userId === member.id);
+                      const isCreator = currentPot && member.id === currentPot.creatorId;
+                      const paid = isCreator || settlement.payments.some((p: any) => p.userId === member.id);
                       const isMe = member.id === session?.user?.id;
                       return (
                         <div key={member.id} className="flex items-center justify-between">
@@ -1154,9 +1155,10 @@ export default function Home() {
                             }
                             <span className={`text-[14px] font-medium ${isMe ? 'text-[#1e40af] font-bold' : 'text-black'}`}>
                               {member.name || member.email?.split('@')[0]}{isMe ? ' (나)' : ''}
+                              {isCreator && <span className="text-[10px] bg-blue-100 text-[#1e40af] px-1.5 py-0.5 rounded-md font-bold ml-1.5">정산자</span>}
                             </span>
                           </div>
-                          {isMe && !paid && (
+                          {isMe && !isCreator && !paid && (
                             <div className="flex gap-1.5 items-center">
                               <a
                                 href={getTossLink(settlement.accountBank, settlement.accountNumber, settlement.perPerson)}
@@ -1178,7 +1180,7 @@ export default function Home() {
                               </button>
                             </div>
                           )}
-                          {isMe && paid && (
+                          {isMe && !isCreator && paid && (
                             <button
                               onClick={handleTogglePay}
                               className="text-xs bg-gray-100 text-gray-400 px-3 py-1.5 rounded-lg font-bold font-sans"

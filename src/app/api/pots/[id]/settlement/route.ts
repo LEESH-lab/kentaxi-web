@@ -82,6 +82,23 @@ export async function POST(
     update: { totalAmount, accountBank, accountNumber, accountHolder },
   });
 
+  // Automatically create a payment record for the creator (the requester)
+  if (pot.creatorId) {
+    await prisma.payment.upsert({
+      where: {
+        settlementId_userId: {
+          settlementId: settlement.id,
+          userId: pot.creatorId,
+        },
+      },
+      create: {
+        settlementId: settlement.id,
+        userId: pot.creatorId,
+      },
+      update: {},
+    });
+  }
+
   return NextResponse.json(settlement);
 }
 

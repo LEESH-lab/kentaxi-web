@@ -26,6 +26,36 @@ import { getTossLink, getKakaoPayLink } from "@/lib/transfer";
 type Direction = 'TO_STATION' | 'FROM_STATION';
 type PotStatus = 'NONE' | 'WAITING' | 'CONFIRMED';
 
+const KENTECH_COORDS = { lat: 35.0125, lng: 126.8048, name: '한국에너지공과대학교' };
+const NAJU_STATION_COORDS = { lat: 35.0142611, lng: 126.7169944, name: '나주역' };
+
+function getTaxiRoute(pot: any) {
+  const fromStr = pot?.from || '';
+  const isToStation = fromStr === '나주' || fromStr.includes('나주') || fromStr.toUpperCase() === 'NAJU';
+  
+  if (isToStation) {
+    return {
+      startName: KENTECH_COORDS.name,
+      startLat: KENTECH_COORDS.lat,
+      startLng: KENTECH_COORDS.lng,
+      endName: NAJU_STATION_COORDS.name,
+      endLat: NAJU_STATION_COORDS.lat,
+      endLng: NAJU_STATION_COORDS.lng,
+      directionText: '학교 ➔ 나주역'
+    };
+  } else {
+    return {
+      startName: NAJU_STATION_COORDS.name,
+      startLat: NAJU_STATION_COORDS.lat,
+      startLng: NAJU_STATION_COORDS.lng,
+      endName: KENTECH_COORDS.name,
+      endLat: KENTECH_COORDS.lat,
+      endLng: KENTECH_COORDS.lng,
+      directionText: '나주역 ➔ 학교'
+    };
+  }
+}
+
 export default function Home() {
   const { data: session } = useSession();
   const generateDates = () => {
@@ -54,6 +84,7 @@ export default function Home() {
   const [isSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [activeChatPotId, setActiveChatPotId] = useState<string | null>(null);
   const [meetingOffsetMins, setMeetingOffsetMins] = useState(30);
+  const [showTaxiModal, setShowTaxiModal] = useState(false);
 
   // Chat States
   const [messages, setMessages] = useState<any[]>([]);
@@ -822,6 +853,91 @@ export default function Home() {
         </div>
       )}
 
+      {/* KAKAO TAXI CALL MODAL */}
+      {showTaxiModal && (() => {
+        const currentPot = pots.find(p => p.id === activeChatPotId);
+        const route = getTaxiRoute(currentPot);
+        const encodedStartName = encodeURIComponent(route.startName);
+        const encodedEndName = encodeURIComponent(route.endName);
+        
+        // App scheme: Kakaomap App Direction
+        const appLink = `kakaomap://route?sp=${route.startLat},${route.startLng}&sn=${encodedStartName}&ep=${route.endLat},${route.endLng}&en=${encodedEndName}&by=CAR`;
+        
+        // Web fallback: Official Web Direction
+        const webLink = `https://map.kakao.com/link/to/${route.endName},${route.endLat},${route.endLng}/from/${route.startName},${route.startLat},${route.startLng}`;
+
+        return (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl p-6 mx-4 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 text-left">
+              
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-kakao-yellow flex items-center justify-center shadow-sm">
+                  <CarTaxiFront className="w-4 h-4 text-[#3c1e1e] fill-current" />
+                </div>
+                <h2 className="font-black text-lg text-gray-900 leading-tight">카카오 T 택시 호출</h2>
+              </div>
+
+              {/* Route Visualization */}
+              <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-5 flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-black text-blue-600 shrink-0">출</div>
+                  <span className="text-sm font-black text-gray-800">{route.startName}</span>
+                </div>
+                <div className="w-px h-4 bg-gray-200 ml-2.5 -my-2" />
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center text-[10px] font-black text-red-600 shrink-0">도</div>
+                  <span className="text-sm font-black text-gray-800">{route.endName}</span>
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="bg-orange-50/60 rounded-xl p-3 border border-orange-100/50 mb-5 space-y-1.5">
+                <p className="text-[11px] text-orange-700 font-bold leading-relaxed">
+                  💡 **호출 연동 가이드**
+                </p>
+                <p className="text-[11px] text-gray-600 leading-relaxed pl-1">
+                  1. 아래 **'카카오맵으로 경로 열기'** 선택 시, 출발지와 도착지가 자동 설정되어 카카오맵 앱이 실행됩니다.
+                </p>
+                <p className="text-[11px] text-gray-600 leading-relaxed pl-1">
+                  2. 실행된 화면 하단의 **'카카오 T 호출'** 또는 **'택시 호출'** 버튼을 누르시면 카카오 T 앱으로 즉시 연동됩니다.
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col gap-2.5">
+                <a
+                  href={appLink}
+                  onClick={() => {
+                    // Try to open app, fallback to web if nothing happens after 1.5s
+                    setTimeout(() => {
+                      window.location.href = webLink;
+                    }, 1500);
+                  }}
+                  className="w-full py-3.5 rounded-2xl bg-kakao-yellow text-[#3c1e1e] font-black text-sm text-center shadow-lg shadow-kakao-yellow/20 hover:bg-[#e5bb00] active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                >
+                  카카오맵으로 경로 열기 (추천)
+                </a>
+                
+                <a
+                  href="kakaotaxi://"
+                  className="w-full py-3 rounded-2xl bg-gray-100 text-gray-700 font-bold text-sm text-center hover:bg-gray-200 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                >
+                  카카오 T 앱 직접 열기
+                </a>
+
+                <button
+                  onClick={() => setShowTaxiModal(false)}
+                  className="w-full py-2.5 text-center text-xs text-gray-400 font-bold hover:text-gray-600 transition-colors mt-1"
+                >
+                  닫기
+                </button>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
+
       {/* CHAT PANEL FULL SCREEN OVERLAY */}
       <div className={`absolute inset-0 z-50 bg-kakao-bg flex flex-col transition-transform duration-300 ease-in-out transform ${
         activeChatPotId ? 'translate-x-0' : 'translate-x-full'
@@ -864,6 +980,47 @@ export default function Home() {
           )}
         </header>
         
+        {/* 카카오 T 호출 연동 배너 */}
+        {activeChatPotId && activeChatPotId !== 'GLOBAL_OPEN_CHAT' && !showSettlement && (() => {
+          const currentPot = pots.find(p => p.id === activeChatPotId);
+          const sortedUsers = [...(currentPot?.users || [])].sort(
+            (a, b) => new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
+          );
+          const earliestUser = sortedUsers[0];
+          const isCaller = earliestUser?.userId === session?.user?.id;
+          const callerName = earliestUser?.user?.name || earliestUser?.user?.email?.split('@')[0] || '알 수 없음';
+
+          return (
+            <div className="bg-[#fff9e6] border-b border-kakao-yellow/30 px-4 py-2.5 flex items-center justify-between shrink-0 animate-in slide-in-from-top duration-300">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-kakao-yellow flex items-center justify-center shrink-0 shadow-sm">
+                  <CarTaxiFront className="w-4 h-4 text-[#3c1e1e] fill-current" />
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-black text-gray-900 leading-tight">카카오 T 호출 연동</p>
+                  <p className="text-[10px] text-gray-500 font-medium">
+                    {isCaller 
+                      ? '출발/도착지가 설정된 상태로 호출하세요' 
+                      : `호출 담당자: ${callerName} (최초 참여 멤버)`}
+                  </p>
+                </div>
+              </div>
+              {isCaller ? (
+                <button
+                  onClick={() => setShowTaxiModal(true)}
+                  className="bg-kakao-yellow text-[#3c1e1e] hover:bg-[#e5bb00] text-[11px] font-black px-3 py-1.5 rounded-xl shadow-sm transition-transform active:scale-95 cursor-pointer font-sans"
+                >
+                  호출하기 🚕
+                </button>
+              ) : (
+                <div className="bg-gray-100 text-gray-400 text-[11px] font-black px-3 py-1.5 rounded-xl border border-gray-200 cursor-not-allowed select-none font-sans flex items-center gap-0.5">
+                  대기 중 🔒
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* 정산 카드 패널 */}
         {showSettlement && (
           <div className="flex-1 overflow-y-auto bg-[#b2c7d9] p-4 space-y-4">

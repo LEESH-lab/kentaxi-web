@@ -13,7 +13,18 @@ export async function GET() {
         },
       },
       include: {
-        users: true,
+        users: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
+          },
+        },
         _count: {
           select: { users: true },
         },

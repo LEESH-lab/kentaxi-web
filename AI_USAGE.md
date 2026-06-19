@@ -9,16 +9,21 @@
 - **Claude Code** — 주요 코딩 에이전트 (코드 생성·리팩터링·문서화)
 
 ## Tasks Supported by AI
-- **코드 생성**: Next.js App Router 아키텍처 설계 및 구현, React 컴포넌트(hooks 기반 상태관리) 작성, 7개로 연결된 Prisma 데이터 모델 최적화, pots/messages/settlements/user 관리용 REST API 라우트 구현
-- **UI/UX 개발**: Tailwind CSS 기반 카카오 T 스타일 모바일 대시보드 디자인, 드럼롤 시간 선택기·슬라이드업 바텀시트·알림 토스트 애니메이션 등 복잡한 UI 패턴 구현
-- **문서화**: PRD, README, 셋업 가이드 등 Markdown 프로젝트 문서 작성 및 최신화
-- **배포 설정**: Vercel 배포 파이프라인 구성 — 환경변수 설정, Prisma 스키마 push 스크립트, 빌드 최적화
+- **메인 대시보드 개발**: Next.js App Router 기반 단일 화면(Single View) 대시보드 — 열차 타임라인 + 팟 현황판 UI 및 hooks 기반 상태관리 구현
+- **열차 시간표 연동**: 공공데이터포털 SRT/KTX TrainInfo API로 나주–수서/용산/목포 등 방향·날짜별 열차 시간표를 가져오는 기능 구현·보완
+- **카카오 T 택시 호출 연동**: `kakaot://` 딥링크로 카카오 T 앱 직접 호출 기능 통합
+- **인증/회원 관리**: NextAuth로 `@kentech.ac.kr` 이메일 인증 회원가입 및 세션 관리 구현
+- **팟·정산 API**: 팟 생성/참여/탈퇴, 정산(Settlement)·결제 REST API 라우트 구현
+- **데이터 모델링**: 7개로 연결된 Prisma 모델(User/Pot/Message/Settlement 등) 설계·최적화
+- **배포·형상관리**: git 커밋·푸시 및 Vercel 배포 파이프라인(환경변수, Prisma push, 빌드) 구성
+- **문서화**: PRD·README·기술 보고서 작성 및 요약 보조
 
 ## Example Prompts
-1. "나주역–KENTECH 택시 합승 매칭 서비스를 Next.js App Router + Prisma로 만들려고 한다. 7개 모델(User/Pot/Message/Settlement 등)의 스키마를 설계해줘."
-2. "공공데이터포털 SRT/KTX TrainInfo API를 호출해 방향·날짜별 열차 목록을 반환하고, API 실패 시 mock 데이터로 폴백하는 라우트를 작성해줘."
-3. "NextAuth v5 Credentials provider로 @kentech.ac.kr 도메인만 허용하고, 이메일 인증코드(nodemailer/Gmail SMTP)를 함께 구현해줘."
-4. "카카오 T 스타일의 드럼롤 시간 선택기가 들어간 슬라이드업 바텀시트를 Tailwind로 만들어줘."
+> 아래는 실제 AI 에이전트 세션에서 진행한 작업을 대표하는 프롬프트입니다.
+1. "카카오 T 택시 호출(`kakaot://`) 기능을 메인 화면에 연동해줘." *(세션: Integrating Kakao Taxi Calling Feature)*
+2. "공공데이터포털 SRT/KTX API로 나주–수서/용산 방향 열차 시간표를 가져오는 기능을 업데이트해줘." *(세션: Updating Seoul Schedule Fetcher)*
+3. "NextAuth로 `@kentech.ac.kr` 도메인만 허용하는 이메일 인증 회원가입을 구현해줘."
+4. "수정사항 및 모든 것 git에 푸시해줘." *(세션: Pushing Git Changes)*
 
 ## AI Outputs We Modified
 - 생성된 열차 API 응답 파싱 로직에 에러 핸들링과 mock 데이터 폴백 추가 (`src/services/trainService.ts`)

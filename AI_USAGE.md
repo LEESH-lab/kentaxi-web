@@ -5,8 +5,8 @@
 > 🔗 라이브 서비스: https://kentaxi-web-ten.vercel.app
 
 ## AI Tools Used
-- **Gemini** (Google Gemini CLI) — 주요 코딩 에이전트 (아키텍처 설계·코드 생성·디버깅)
-- **Claude (Antigravity IDE)** — Google Antigravity 에이전틱 IDE에서 Claude 모델로 코드 생성·리팩터링·문서화
+- **Gemini CLI** — 주요 코딩 에이전트 (아키텍처 설계·코드 생성·디버깅)
+- **Claude Code** — 주요 코딩 에이전트 (코드 생성·리팩터링·문서화)
 
 ## Tasks Supported by AI
 - **코드 생성**: Next.js App Router 아키텍처 설계 및 구현, React 컴포넌트(hooks 기반 상태관리) 작성, 7개로 연결된 Prisma 데이터 모델 최적화, pots/messages/settlements/user 관리용 REST API 라우트 구현

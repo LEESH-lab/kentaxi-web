@@ -46,7 +46,14 @@ next-env.d.ts
 *.png
 
 .env*.local
-CTempnextdev.log
+
+# local databases & logs
+*.db
+*.log
+
+# ad-hoc debug / verification scripts
 response.txt
+test_api.js
 test_notification.mjs
+verify_settlement.mjs
 verify_solo_chat.mjs
